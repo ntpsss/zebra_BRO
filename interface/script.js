@@ -1,168 +1,555 @@
-const $ = (s) => document.querySelector(s);
-const fmt = (n) => n.toLocaleString('ru-RU') + ' ₽';
-
-// 1. Меню каталога
-const menuItems = [
-  'Мягкая мебель',
-  'Спальни',
-  'Гостиные',
-  'Шкафы',
-  'Кухни',
-  'Товары для дома'
-];
-
-$('#menuItems').innerHTML = menuItems
-  .map(
-    (x) => `
-      <a href="#" class="flex justify-between items-center px-4 py-3 rounded-xl hover:bg-brand-soft hover:text-brand-dark">
-        ${x}
-        <svg class="w-4 h-4"><use href="#chev"/></svg>
-      </a>
-    `
-  )
-  .join('');
-
-const menu = $('#catalogMenu');
-
-$('#catalogBtn').onclick = (e) => {
-  e.stopPropagation();
-  menu.classList.toggle('hidden');
+const $ = (selector) => {
+  return document.querySelector(selector);
 };
 
-document.addEventListener('click', (e) => {
-  if (!$('#catalogWrap').contains(e.target)) {
-    menu.classList.add('hidden');
+const $$ = (selector) => {
+  return document.querySelectorAll(selector);
+};
+
+const formatPrice = (price) => {
+  return `${price.toLocaleString('ru-RU')} ₽`;
+};
+
+const imagePath = (fileName) => {
+  return `../images/${fileName}`;
+};
+
+const fallbackImage = imagePath('fallback.png');
+
+/* =========================================================
+   ПОЛНОЭКРАННЫЙ КАТАЛОГ
+   ========================================================= */
+
+const catalogButton = $('#catalog-button');
+const catalogPanel = $('#catalog-panel');
+const catalogClose = $('#catalog-close');
+
+const openCatalog = () => {
+  if (!catalogPanel) {
+    return;
+  }
+
+  catalogPanel.classList.remove('hidden');
+  document.body.classList.add('catalog-is-open');
+
+  if (catalogButton) {
+    catalogButton.setAttribute('aria-expanded', 'true');
+  }
+};
+
+const closeCatalog = () => {
+  if (!catalogPanel) {
+    return;
+  }
+
+  catalogPanel.classList.add('hidden');
+  document.body.classList.remove('catalog-is-open');
+
+  if (catalogButton) {
+    catalogButton.setAttribute('aria-expanded', 'false');
+  }
+};
+
+if (catalogButton && catalogPanel) {
+  catalogButton.addEventListener('click', (event) => {
+    event.stopPropagation();
+
+    const isCatalogClosed =
+      catalogPanel.classList.contains('hidden');
+
+    if (isCatalogClosed) {
+      openCatalog();
+    } else {
+      closeCatalog();
+    }
+  });
+}
+
+if (catalogClose) {
+  catalogClose.addEventListener('click', closeCatalog);
+}
+
+document.addEventListener('click', (event) => {
+  const clickedInsideCatalog = event.target.closest(
+    '#catalog-panel, #catalog-button'
+  );
+
+  if (!clickedInsideCatalog) {
+    closeCatalog();
   }
 });
 
-// 2. Очистка полей поиска
-document.querySelectorAll('[data-clear]').forEach((b) => {
-  b.onclick = () => {
-    let i = document.getElementById(b.dataset.clear);
-    i.value = '';
-    i.focus();
-  };
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') {
+    closeCatalog();
+  }
 });
 
-// 3. Категории мебели
-const cats = [
-  ['Гостиная', 'photo-1618221195710-dd6b41faaea6'],
-  ['Спальня', 'photo-1616486338812-3dadae4b4ace'],
-  ['Кухня', 'photo-1556911220-bff31c812dba'],
-  ['Детская', 'photo-1586023492125-27b2c045efd7'],
-  ['Текстиль', 'photo-1584100936595-c0654b55a2e2'],
-  ['Новинки', 'photo-1600210492486-724fe5c67fb0']
+/* =========================================================
+   ПЕРЕКЛЮЧЕНИЕ КАТЕГОРИЙ В КАТАЛОГЕ
+   ========================================================= */
+
+const categoryButtons = $$('.catalog-category');
+const categoryCards = $$('[data-category-card]');
+const categoryTitle = $('#catalog-category-title');
+
+const categoryTitles = {
+  all: 'Выбирайте мебель для дома',
+  sale: 'Распродажа мебели',
+  new: 'Новинки',
+  kitchen: 'Мебель для кухни',
+  kids: 'Детская мебель',
+  mattresses: 'Матрасы',
+  wardrobe: 'Шкафы-купе',
+  living: 'Мебель для гостиной',
+  hallway: 'Прихожие',
+  office: 'Компьютерные и письменные столы',
+  shoe: 'Обувницы',
+  chests: 'Тумбы и комоды',
+  wardrobes: 'Шкафы',
+  bedroom: 'Спальни',
+  series: 'Серии мебели',
+  sets: 'Готовые комплекты',
+  grace: 'Коллекция «Грэйс»',
+  camellia: 'Коллекция «Камелия»',
+  karina: 'КАРИНА со скидкой',
+  modules: 'Каталог всех модулей',
+  'karina-sale': 'КАРИНА -20%'
+};
+
+categoryButtons.forEach((button) => {
+  button.addEventListener('click', () => {
+    const selectedCategory = button.dataset.category;
+
+    categoryButtons.forEach((categoryButton) => {
+      categoryButton.classList.remove('active');
+    });
+
+    button.classList.add('active');
+
+    if (categoryTitle) {
+      categoryTitle.textContent =
+        categoryTitles[selectedCategory] ||
+        categoryTitles.all;
+    }
+
+    categoryCards.forEach((card) => {
+      const cardCategory = card.dataset.categoryCard;
+
+      const shouldShow =
+        selectedCategory === 'all' ||
+        cardCategory === selectedCategory;
+
+      card.hidden = !shouldShow;
+    });
+  });
+});
+
+/* =========================================================
+   ОЧИСТКА ПОЛЕЙ ПОИСКА
+   ========================================================= */
+
+$$('[data-clear]').forEach((button) => {
+  button.addEventListener('click', () => {
+    const input = document.getElementById(
+      button.dataset.clear
+    );
+
+    if (!input) {
+      return;
+    }
+
+    input.value = '';
+    input.focus();
+  });
+});
+
+/* =========================================================
+   КАТЕГОРИИ НА ГЛАВНОЙ
+   ========================================================= */
+
+const categories = [
+  ['Гостиная', 'living-room.png'],
+  ['Спальня', 'bedroom.png'],
+  ['Кухня', 'kitchen.png'],
+  ['Детская', 'kids-room.png'],
+  ['Текстиль', 'textile.png'],
+  ['Новинки', 'new.png']
 ];
 
-const fallback =
-  'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=600&q=70';
+const quickCategories = $('#quickCats');
 
-$('#quickCats').innerHTML = cats
-  .map(
-    ([n, id]) => `
-      <a href="#" class="group text-center">
-        <div class="aspect-square rounded-full overflow-hidden shadow-soft ring-4 ring-white group-hover:ring-brand transition">
-          <img src="https://images.unsplash.com/${id}?auto=format&fit=crop&w=400&q=75" onerror="this.src='${fallback}'" alt="${n}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
-        </div>
-        <span class="block mt-2 text-sm font-semibold group-hover:text-brand-dark">${n}</span>
-      </a>
-    `
-  )
-  .join('');
+if (quickCategories) {
+  quickCategories.innerHTML = categories
+    .map(([name, fileName]) => {
+      return `
+        <a
+          href="#hits"
+          class="category-card"
+        >
+          <span class="category-image">
+            <img
+              src="${imagePath(fileName)}"
+              alt="${name}"
+              onerror="this.onerror=null; this.src='${fallbackImage}'"
+            >
+          </span>
 
-// 4. Товары и генерация карусели
+          <span class="category-name">
+            ${name}
+          </span>
+        </a>
+      `;
+    })
+    .join('');
+}
+
+/* =========================================================
+   ТОВАРЫ
+   ========================================================= */
+
 const products = [
-  ['Диван «Зебра»', 'photo-1555041469-a586c61ea9bc', 89990, 62990, 4.9, 148],
-  ['Кровать «Аристократ» 160×200', 'photo-1550226891-ef816aed4a98', 74990, 52490, 4.8, 96],
-  ['Кресло «Адель»', 'photo-1540574163026-643ea20ade25', 29990, 20990, 4.7, 183],
-  ['Стул «Золотой»', 'photo-1567538096630-e0c55bd6374c', 8990, 6290, 4.6, 211],
-  ['Шкаф «Версаль»', 'photo-1558997519-83ea9252edf8', 109990, 76990, 4.8, 72],
-  ['Кухня «Модерн»', 'photo-1556911220-bff31c812dba', 189990, 132990, 4.9, 54],
-  ['Торшер «Шампань»', 'photo-1507473885765-e6ed057f782c', 15990, 11190, 4.7, 119]
+  [
+    'Диван «Зебра»',
+    'sofa.png',
+    89990,
+    62990,
+    4.9,
+    148
+  ],
+  [
+    'Кровать «Аристократ» 160×200',
+    'bed.png',
+    74990,
+    52490,
+    4.8,
+    96
+  ],
+  [
+    'Кресло «Адель»',
+    'chair.png',
+    29990,
+    20990,
+    4.7,
+    183
+  ],
+  [
+    'Стул «Золотой»',
+    'chair-gold.png',
+    8990,
+    6290,
+    4.6,
+    211
+  ],
+  [
+    'Шкаф «Версаль»',
+    'wardrobe.png',
+    109990,
+    76990,
+    4.8,
+    72
+  ],
+  [
+    'Кухня «Модерн»',
+    'kitchen.png',
+    189990,
+    132990,
+    4.9,
+    54
+  ],
+  [
+    'Торшер «Шампань»',
+    'lamp.png',
+    15990,
+    11190,
+    4.7,
+    119
+  ]
 ];
 
-const stars = (r) =>
-  [1, 2, 3, 4, 5]
+const renderStars = (rating) => {
+  return [1, 2, 3, 4, 5]
+    .map((star) => {
+      const starClass =
+        star <= Math.round(rating)
+          ? 'star-filled'
+          : 'star-empty';
+
+      return `
+        <svg class="${starClass}">
+          <use href="#star"></use>
+        </svg>
+      `;
+    })
+    .join('');
+};
+
+const carousel = $('#carousel');
+
+if (carousel) {
+  carousel.innerHTML = products
     .map(
-      (i) =>
-        `<svg class="w-4 h-4 ${i <= Math.round(r) ? 'text-amber-400' : 'text-neutral-300'}"><use href="#star"/></svg>`
+      (
+        [
+          name,
+          fileName,
+          oldPrice,
+          newPrice,
+          rating,
+          reviews
+        ],
+        index
+      ) => {
+        const discount = Math.round(
+          (1 - newPrice / oldPrice) * 100
+        );
+
+        return `
+          <article class="product-card">
+            <div class="product-image">
+              <img
+                src="${imagePath(fileName)}"
+                alt="${name}"
+                onerror="this.onerror=null; this.src='${fallbackImage}'"
+              >
+
+              <span class="discount">
+                -${discount}%
+              </span>
+
+              <button
+                class="favorite-button"
+                data-fav="${index}"
+                type="button"
+                aria-label="Добавить в избранное"
+              >
+                <svg>
+                  <use href="#heart"></use>
+                </svg>
+              </button>
+            </div>
+
+            <div class="product-body">
+              <h3 class="product-title">
+                ${name}
+              </h3>
+
+              <div class="rating">
+                ${renderStars(rating)}
+
+                <span class="rating-count">
+                  ${rating} (${reviews})
+                </span>
+              </div>
+
+              <div class="price-row">
+                <span class="price">
+                  ${formatPrice(newPrice)}
+                </span>
+
+                <span class="old-price">
+                  ${formatPrice(oldPrice)}
+                </span>
+              </div>
+
+              <button
+                class="buy-button"
+                data-buy="${index}"
+                type="button"
+              >
+                В корзину
+              </button>
+            </div>
+          </article>
+        `;
+      }
     )
     .join('');
+}
 
-$('#carousel').innerHTML = products
-  .map(
-    ([name, id, old, nw, r, cnt], i) => `
-      <article class="snap-start shrink-0 w-[70%] sm:w-[40%] md:w-[30%] lg:w-[23.5%] bg-[#fffdf9] rounded-2xl shadow-soft hover:shadow-lift transition overflow-hidden flex flex-col border border-[#eee4cf]">
-        <div class="relative aspect-[4/3] bg-neutral-100">
-          <img src="https://images.unsplash.com/${id}?auto=format&fit=crop&w=600&q=75" onerror="this.src='${fallback}'" alt="${name}" class="w-full h-full object-cover">
-          <span class="absolute top-3 left-3 bg-brand text-white text-xs font-bold rounded-lg px-2 py-1">-${Math.round((1 - nw / old) * 100)}%</span>
-          <button data-fav="${i}" class="absolute top-3 right-3 w-9 h-9 bg-white rounded-full shadow-soft grid place-items-center text-neutral-500 hover:text-brand-dark">
-            <svg class="w-5 h-5"><use href="#heart"/></svg>
-          </button>
-        </div>
-        <div class="p-4 flex flex-col flex-1">
-          <h3 class="font-semibold leading-snug min-h-[2.5rem]">${name}</h3>
-          <div class="flex items-center gap-1 mt-2">
-            ${stars(r)}
-            <span class="text-xs text-neutral-500 ml-1">${r} (${cnt})</span>
-          </div>
-          <div class="mt-3 flex items-baseline gap-2">
-            <span class="text-xl font-extrabold text-brand-dark">${fmt(nw)}</span>
-            <span class="text-sm text-neutral-400 line-through">${fmt(old)}</span>
-          </div>
-          <button data-buy="${i}" class="mt-4 w-full bg-brand hover:bg-brand-dark text-white font-semibold rounded-xl py-2.5 transition">
-            В корзину
-          </button>
-        </div>
-      </article>
-    `
-  )
-  .join('');
+/* =========================================================
+   ИЗБРАННОЕ И КОРЗИНА
+   ========================================================= */
 
-// 5. Обработка избранного и корзины
-let fav = new Set();
-let cart = { n: 0, sum: 0 };
+const favorites = new Set();
 
-$('#carousel').addEventListener('click', (e) => {
-  let f = e.target.closest('[data-fav]');
-  let b = e.target.closest('[data-buy]');
+const cart = {
+  count: 0,
+  total: 0
+};
 
-  if (f) {
-    let i = +f.dataset.fav;
-    fav.has(i) ? fav.delete(i) : fav.add(i);
-    f.classList.toggle('text-brand-dark', fav.has(i));
-    f.querySelector('svg').style.fill = fav.has(i) ? '#C9A34E' : 'none';
-    $('#favBadge').textContent = fav.size;
-  }
+if (carousel) {
+  carousel.addEventListener('click', (event) => {
+    const favoriteButton =
+      event.target.closest('[data-fav]');
 
-  if (b) {
-    cart.n++;
-    cart.sum += products[+b.dataset.buy][3];
-    $('#cartBadge').textContent = cart.n;
-    $('#cartSum').textContent = fmt(cart.sum);
-    b.textContent = 'Добавлено ✓';
-    setTimeout(() => {
-      b.textContent = 'В корзину';
-    }, 1200);
-  }
+    const buyButton =
+      event.target.closest('[data-buy]');
+
+    if (favoriteButton) {
+      const productIndex = Number(
+        favoriteButton.dataset.fav
+      );
+
+      if (favorites.has(productIndex)) {
+        favorites.delete(productIndex);
+      } else {
+        favorites.add(productIndex);
+      }
+
+      favoriteButton.classList.toggle(
+        'is-favorite',
+        favorites.has(productIndex)
+      );
+
+      const favoriteBadge = $('#favBadge');
+
+      if (favoriteBadge) {
+        favoriteBadge.textContent = favorites.size;
+      }
+    }
+
+    if (buyButton) {
+      const productIndex = Number(
+        buyButton.dataset.buy
+      );
+
+      cart.count += 1;
+      cart.total += products[productIndex][3];
+
+      const cartBadge = $('#cartBadge');
+      const cartSum = $('#cartSum');
+
+      if (cartBadge) {
+        cartBadge.textContent = cart.count;
+      }
+
+      if (cartSum) {
+        cartSum.textContent = formatPrice(cart.total);
+      }
+
+      buyButton.textContent = 'Добавлено ✓';
+
+      window.setTimeout(() => {
+        buyButton.textContent = 'В корзину';
+      }, 1200);
+    }
+  });
+}
+
+/* =========================================================
+   ПРОКРУТКА КАРУСЕЛИ
+   ========================================================= */
+
+const previousButton = $('#prev');
+const nextButton = $('#next');
+
+if (carousel && previousButton) {
+  previousButton.addEventListener('click', () => {
+    carousel.scrollBy({
+      left: -carousel.clientWidth * 0.8,
+      behavior: 'smooth'
+    });
+  });
+}
+
+if (carousel && nextButton) {
+  nextButton.addEventListener('click', () => {
+    carousel.scrollBy({
+      left: carousel.clientWidth * 0.8,
+      behavior: 'smooth'
+    });
+  });
+}
+
+/* =========================================================
+   ПОИСК ПО ТОВАРАМ
+   ========================================================= */
+
+const searchInputs = [
+  $('#desktop-query'),
+  $('#mobile-query')
+].filter(Boolean);
+
+const filterProducts = (query) => {
+  const normalizedQuery = query
+    .trim()
+    .toLowerCase();
+
+  const productCards = $$('.product-card');
+
+  productCards.forEach((card) => {
+    const title = card
+      .querySelector('.product-title')
+      ?.textContent
+      .toLowerCase() || '';
+
+    const shouldShow =
+      normalizedQuery === '' ||
+      title.includes(normalizedQuery);
+
+    card.hidden = !shouldShow;
+  });
+};
+
+searchInputs.forEach((input) => {
+  input.addEventListener('input', () => {
+    filterProducts(input.value);
+
+    searchInputs.forEach((otherInput) => {
+      if (otherInput !== input) {
+        otherInput.value = input.value;
+      }
+    });
+  });
 });
 
-// 6. Управление прокруткой карусели
-const car = $('#carousel');
+$('#desktop-search')?.addEventListener(
+  'submit',
+  (event) => {
+    event.preventDefault();
 
-$('#prev').onclick = () => {
-  car.scrollBy({ left: -car.clientWidth * 0.8, behavior: 'smooth' });
-};
+    const input = $('#desktop-query');
 
-$('#next').onclick = () => {
-  car.scrollBy({ left: car.clientWidth * 0.8, behavior: 'smooth' });
-};
+    if (input) {
+      filterProducts(input.value);
+    }
+  }
+);
 
-// 7. Форма подписки на рассылку
-$('#subForm').onsubmit = (e) => {
-  e.preventDefault();
-  $('#subMsg').textContent = 'Спасибо! Вы подписались на новости.';
-  e.target.reset();
-};
+$('#mobile-search')?.addEventListener(
+  'submit',
+  (event) => {
+    event.preventDefault();
 
+    const input = $('#mobile-query');
 
+    if (input) {
+      filterProducts(input.value);
+    }
+  }
+);
+
+/* =========================================================
+   ПОДПИСКА
+   ========================================================= */
+
+const subscriptionForm = $('#subForm');
+
+if (subscriptionForm) {
+  subscriptionForm.addEventListener(
+    'submit',
+    (event) => {
+      event.preventDefault();
+
+      const message = $('#subMsg');
+
+      if (message) {
+        message.textContent =
+          'Спасибо! Вы подписались на новости.';
+      }
+
+      subscriptionForm.reset();
+    }
+  );
+}

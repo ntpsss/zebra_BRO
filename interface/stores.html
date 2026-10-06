@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Магазины мебели «Золотая зебра» в Воронеже и Воронежской области.">
+  <title>Магазины — Золотая зебра</title>
+  <link rel="stylesheet" href="./style.css">
+  <style>
+    .stores-hero{padding:54px 0 34px;text-align:center}.stores-hero h1{margin:10px 0 0;font-size:clamp(36px,6vw,64px)}.stores-hero p{max-width:720px;margin:16px auto 0;color:var(--muted);font-size:18px}.store-layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(280px,.8fr);gap:24px;padding-bottom:56px}.stores-list{display:grid;gap:16px}.store-card{display:grid;grid-template-columns:70px 1fr auto;gap:18px;align-items:start;padding:22px;background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);transition:.2s}.store-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-large)}.store-icon{width:58px;height:58px;display:grid;place-items:center;color:var(--gold-dark);background:var(--gold-soft);border-radius:16px}.store-icon svg{width:28px;height:28px}.store-name{margin:0;font-family:var(--serif);font-size:22px}.store-address{margin:7px 0 0;color:var(--muted);font-size:15px;line-height:1.5}.store-phone{display:inline-block;margin-top:9px;color:var(--gold-dark);font-weight:700}.store-phone:hover{color:var(--gold)}.store-actions{display:flex;flex-direction:column;gap:8px;min-width:150px}.store-button{display:inline-flex;justify-content:center;padding:10px 14px;color:var(--white);background:var(--gold);border-radius:10px;font-size:13px;font-weight:700;text-align:center}.store-button:hover{background:var(--gold-dark)}.store-button.secondary{color:var(--gold-dark);background:var(--gold-soft)}.store-button.secondary:hover{color:var(--white);background:var(--gold-dark)}.stores-aside{height:max-content;padding:26px;color:#ded3c1;background:#2d2419;border-radius:20px;box-shadow:var(--shadow-large)}.stores-aside h2{color:var(--white);font-size:30px}.stores-aside p{margin:14px 0;color:#ded3c1}.aside-list{display:grid;gap:13px;margin:22px 0 0;padding:0;list-style:none}.aside-list li{display:flex;gap:10px;align-items:flex-start}.aside-list svg{flex:0 0 auto;width:20px;height:20px;color:var(--gold-light)}.transport{margin-top:22px;padding-top:18px;border-top:1px solid rgba(255,255,255,.15)}.map-placeholder{display:grid;place-items:center;min-height:160px;margin-top:20px;color:var(--gold-light);background:linear-gradient(135deg,#453723,#80632d);border-radius:14px;text-align:center}.map-placeholder svg{width:38px;height:38px;margin:0 auto 8px}.map-placeholder span{display:block;color:#fff;font-weight:700}.map-placeholder small{display:block;margin-top:4px;color:#ded3c1}.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px}.filter-button{padding:9px 14px;color:var(--gold-dark);background:var(--gold-soft);border:0;border-radius:999px;cursor:pointer;font-weight:700}.filter-button.active,.filter-button:hover{color:#fff;background:var(--gold)}@media(max-width:850px){.store-layout{grid-template-columns:1fr}.stores-aside{order:-1}}@media(max-width:600px){.stores-hero{padding:36px 0 28px}.stores-hero p{font-size:16px}.store-card{grid-template-columns:48px 1fr}.store-icon{width:46px;height:46px;border-radius:12px}.store-icon svg{width:23px;height:23px}.store-actions{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;min-width:0}.store-name{font-size:20px}}
+  </style>
+</head>
+<body>
+  <svg hidden aria-hidden="true">
+    <symbol id="location" viewBox="0 0 24 24"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+    <symbol id="phone" viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2Z"/></symbol>
+    <symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="car" viewBox="0 0 24 24"><path d="M5 17h14l1-5-2-5H6l-2 5 1 5Z"/><path d="M4 12h16M7 17v2M17 17v2"/><circle cx="7" cy="15" r="1"/><circle cx="17" cy="15" r="1"/></symbol>
+    <symbol id="map" viewBox="0 0 24 24"><path d="m9 18-6 3V6l6-3 6 3 6-3v15l-6 3-6-3Z"/><path d="M9 3v15M15 6v15"/></symbol>
+  </svg>
+
+  <header class="site-header">
+    <div class="container">
+      <div class="header-main">
+        <a class="brand" href="./index.html"><img class="brand-logo" src="../images/image.png" alt="Логотип Золотая зебра"><span><span class="brand-name">Золотая зебра</span><span class="brand-caption">мебель</span></span></a>
+        <nav class="page-links" aria-label="Основная навигация"><a href="./index.html">Главная</a><a href="./manufacturers.html">Производители</a><a class="active" href="./stores.html">Магазины</a></nav>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <section class="stores-hero"><div class="eyebrow">Золотая зебра рядом</div><h1>Наши магазины</h1><p>Выберите удобный магазин, приезжайте посмотреть мебель вживую и получите консультацию специалистов.</p></section>
+      <div class="filter-row" aria-label="Фильтр магазинов"><button class="filter-button active" data-filter="all">Все магазины</button><button class="filter-button" data-filter="воронеж">Воронеж</button><button class="filter-button" data-filter="область">Область</button></div>
+      <section class="store-layout">
+        <div class="stores-list" id="stores-list"></div>
+        <aside class="stores-aside"><div class="eyebrow">Посетите нас</div><h2>Поможем выбрать мебель</h2><p>В магазинах можно посмотреть образцы материалов, сравнить модели и оформить заказ.</p><ul class="aside-list"><li><svg><use href="#clock"></use></svg><span>Ежедневно, уточняйте режим работы по телефону</span></li><li><svg><use href="#phone"></use></svg><span>Позвоните перед визитом, чтобы уточнить наличие товара</span></li><li><svg><use href="#car"></use></svg><span>Рядом с магазинами есть парковка</span></li></ul><div class="map-placeholder"><div><svg><use href="#map"></use></svg><span>Магазины в Воронеже</span><small>Откройте маршрут в Google Maps</small></div></div></aside>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer"><div class="copyright">© 2026 «Золотая зебра». Все права защищены.</div></footer>
+
+  <script>
+    const stores = [
+      {name:'ТРК «Арена»',city:'Воронеж',address:'б-р Победы, 23Б, 4 этаж',phone:'+7 (473) 258-66-33',hours:'Уточняйте режим работы по телефону'},
+      {name:'ТЦ «Максимир»',city:'Воронеж',address:'Ленинский пр-т, 174П, 4 этаж',phone:'+7 (473) 258-66-22, 23-32-078',hours:'Уточняйте режим работы по телефону'},
+      {name:'ЦДМ',city:'Воронеж',address:'ул. Урицкого, 70, 1 этаж',phone:'+7 (473) 258-57-56',hours:'Уточняйте режим работы по телефону'},
+      {name:'ТЦ «Карусель»',city:'Воронеж',address:'ул. Космонавтов, 27а, 2 этаж',phone:'+7 (473) 258-49-58',hours:'Уточняйте режим работы по телефону'},
+      {name:'Территория Доступной Мебели',city:'Воронеж',address:'Ленинский пр-т, 4',phone:'+7 (473) 49-73-46, 258-66-11',hours:'Уточняйте режим работы по телефону'},
+      {name:'Сити-парк «Град»',city:'Область',address:'3 км автотрассы Воронеж—Москва, цокольный этаж, «Лером»',phone:'+7 (930) 408-12-33',hours:'Уточняйте режим работы по телефону'}
+    ];
+    const list=document.querySelector('#stores-list');
+    const mapsUrl=(store)=>`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('Воронеж, '+store.address)}`;
+    const phoneUrl=(phone)=>`tel:${phone.replace(/[^+\d]/g,'')}`;
+    function renderStores(filter='all'){
+      const filtered=filter==='all'?stores:stores.filter(store=>store.city.toLowerCase()===filter);
+      list.innerHTML=filtered.map(store=>`<article class="store-card"><div class="store-icon"><svg><use href="#location"></use></svg></div><div><h2 class="store-name">${store.name}</h2><p class="store-address">${store.address}</p><a class="store-phone" href="${phoneUrl(store.phone)}">${store.phone}</a><p class="store-address">${store.hours}</p></div><div class="store-actions"><a class="store-button" href="${mapsUrl(store)}" target="_blank" rel="noopener noreferrer">Открыть карту</a><a class="store-button secondary" href="${phoneUrl(store.phone)}">Позвонить</a></div></article>`).join('');
+    }
+    renderStores();
+    document.querySelectorAll('[data-filter]').forEach(button=>button.addEventListener('click',()=>{document.querySelectorAll('[data-filter]').forEach(item=>item.classList.remove('active'));button.classList.add('active');renderStores(button.dataset.filter)}));
+  </script>
+</body>
+</html>

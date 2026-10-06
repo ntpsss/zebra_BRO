@@ -64,20 +64,24 @@
       <div class="container">
         <div class="header-main">
           <a class="brand" href="#top">
-            <img class="brand-logo" src="/images/image.png" alt="Логотип Золотая зебра">
+           <img class="brand-logo" src="../images/image.png" alt="Логотип Золотая зебра">
             <span>
               <span class="brand-name">Золотая зебра</span>
               <span class="brand-caption">мебель</span>
             </span>
           </a>
-
-          <div class="catalog">
-            <button class="catalog-button" id="catalog-button" type="button">
-              <svg><use href="#grid"></use></svg>
-              Мебель
-            </button>
-            <div class="catalog-menu hidden" id="catalog-menu"></div>
-          </div>
+<div class="catalog">
+  <button
+    class="catalog-button"
+    id="catalog-button"
+    type="button"
+    aria-expanded="false"
+  >
+    <svg>
+      <use href="#grid"></use>
+    </svg>Каталог
+  </button>
+</div>
 
           <form class="search-form desktop-search" id="desktop-search">
             <svg><use href="#search"></use></svg>
@@ -117,6 +121,375 @@
         </form>
       </div>
     </header>
+<section
+  class="catalog-fullscreen hidden"
+  id="catalog-panel"
+  aria-label="Полный каталог мебели"
+>
+  <div class="catalog-fullscreen-inner">
+    <div class="catalog-fullscreen-header">
+      <div>
+        <p class="catalog-label">
+          Золотая зебра
+        </p>
+
+        <h2>
+          Каталог мебели
+        </h2>
+      </div>
+
+      <button
+        class="catalog-close"
+        id="catalog-close"
+        type="button"
+        aria-label="Закрыть каталог"
+      >
+        ×
+      </button>
+    </div>
+
+    <div class="catalog-fullscreen-body">
+      <aside class="catalog-sidebar">
+        <button
+          class="catalog-category active"
+          type="button"
+          data-category="all"
+        >
+          <span>Вся мебель</span>
+          <span class="category-arrow">›</span>
+        </button>
+
+        <button
+          class="catalog-category sale-category"
+          type="button"
+          data-category="sale"
+        >
+          <span>Распродажа</span>
+          <span class="category-arrow">›</span>
+        </button>
+
+        <button
+          class="catalog-category"
+          type="button"
+          data-category="new"
+        >
+          <span>Новинки</span>
+          <span class="category-arrow">›</span>
+        </button>
+
+        <button
+          class="catalog-category"
+          type="button"
+          data-category="kitchen"
+        >
+          <span>Мебель для кухни</span>
+          <span class="category-arrow">›</span>
+        </button>
+
+        <button
+          class="catalog-category"
+          type="button"
+          data-category="kids"
+        >
+          <span>Детская мебель</span>
+          <span class="category-arrow">›</span>
+        </button>
+
+        <button
+          class="catalog-category"
+          type="button"
+          data-category="mattresses"
+        >
+          <span>Матрасы</span>
+          <span class="category-arrow">›</span>
+        </button>
+
+        <button
+          class="catalog-category"
+          type="button"
+          data-category="wardrobe"
+        >
+          <span>Шкафы-купе</span>
+          <span class="category-arrow">›</span>
+        </button>
+
+        <button
+          class="catalog-category"
+          type="button"
+          data-category="living"
+        >
+          <span>Мебель для гостиной</span>
+          <span class="category-arrow">›</span>
+        </button>
+
+        <button
+          class="catalog-category"
+          type="button"
+          data-category="hallway"
+        >
+          <span>Прихожие</span>
+          <span class="category-arrow">›</span>
+        </button>
+
+        <button
+          class="catalog-category"
+          type="button"
+          data-category="office"
+        >
+          <span>Компьютерные и письменные столы</span>
+          <span class="category-arrow">›</span>
+        </button>
+
+        <button
+          class="catalog-category"
+          type="button"
+          data-category="shoe"
+        >
+          <span>Обувницы</span>
+          <span class="category-arrow">›</span>
+        </button>
+
+        <button
+          class="catalog-category"
+          type="button"
+          data-category="chests"
+        >
+          <span>Тумбы и комоды</span>
+          <span class="category-arrow">›</span>
+        </button>
+
+        <button
+          class="catalog-category"
+          type="button"
+          data-category="wardrobes"
+        >
+          <span>Шкафы</span>
+          <span class="category-arrow">›</span>
+        </button>
+
+        <button
+          class="catalog-category has-submenu"
+          type="button"
+          data-category="bedroom"
+        >
+          <span>Спальни</span>
+          <strong>+</strong>
+        </button>
+
+        <button
+          class="catalog-category has-submenu"
+          type="button"
+          data-category="series"
+        >
+          <span>Серии</span>
+          <strong>+</strong>
+        </button>
+
+        <button
+          class="catalog-category"
+          type="button"
+          data-category="sets"
+        >
+          <span>Готовые комплекты</span>
+          <span class="category-arrow">›</span>
+        </button>
+
+        <button
+          class="catalog-category"
+          type="button"
+          data-category="grace"
+        >
+          <span>Грэйс</span>
+          <span class="category-arrow">›</span>
+        </button>
+
+        <button
+          class="catalog-category"
+          type="button"
+          data-category="camellia"
+        >
+          <span>Камелия</span>
+          <span class="category-arrow">›</span>
+        </button>
+
+        <button
+          class="catalog-category sale-category"
+          type="button"
+          data-category="karina"
+        >
+          <span>КАРИНА от -20% до -40%</span>
+          <span class="category-arrow">›</span>
+        </button>
+
+        <button
+          class="catalog-category has-submenu"
+          type="button"
+          data-category="modules"
+        >
+          <span>Каталог всех модулей</span>
+          <strong>+</strong>
+        </button>
+
+        <button
+          class="catalog-category sale-category"
+          type="button"
+          data-category="karina-sale"
+        >
+          <span>КАРИНА -20%</span>
+          <span class="category-arrow">›</span>
+        </button>
+      </aside>
+
+      <section class="catalog-fullscreen-content">
+        <div class="catalog-content-heading">
+          <div>
+            <span class="catalog-content-label">
+              Популярные разделы
+            </span>
+
+            <h3 id="catalog-category-title">
+              Выбирайте мебель для дома
+            </h3>
+          </div>
+
+          <a
+            href="#hits"
+            class="catalog-all-link"
+            id="catalog-all-link"
+          >
+            Смотреть всё
+            <span>→</span>
+          </a>
+        </div>
+
+        <div
+          class="catalog-products"
+          id="catalog-products"
+        >
+          <a
+            class="catalog-card"
+            href="#hits"
+            data-category-card="kitchen"
+          >
+            <div class="catalog-card-image">
+              <img
+                src="../images/kitchen.png"
+                alt="Мебель для кухни"
+              >
+            </div>
+
+            <span>Мебель для кухни</span>
+          </a>
+
+          <a
+            class="catalog-card"
+            href="#hits"
+            data-category-card="kids"
+          >
+            <div class="catalog-card-image">
+              <img
+                src="../images/kids-room.png"
+                alt="Детская мебель"
+              >
+            </div>
+
+            <span>Детская мебель</span>
+          </a>
+
+          <a
+            class="catalog-card"
+            href="#hits"
+            data-category-card="mattresses"
+          >
+            <div class="catalog-card-image">
+              <img
+                src="../images/bed.png"
+                alt="Матрасы"
+              >
+            </div>
+
+            <span>Матрасы</span>
+          </a>
+
+          <a
+            class="catalog-card"
+            href="#hits"
+            data-category-card="wardrobe"
+          >
+            <div class="catalog-card-image">
+              <img
+                src="../images/wardrobe.png"
+                alt="Шкафы-купе"
+              >
+            </div>
+
+            <span>Шкафы-купе</span>
+          </a>
+
+          <a
+            class="catalog-card"
+            href="#hits"
+            data-category-card="living"
+          >
+            <div class="catalog-card-image">
+              <img
+                src="../images/living-room.png"
+                alt="Мебель для гостиной"
+              >
+            </div>
+
+            <span>Мебель для гостиной</span>
+          </a>
+
+          <a
+            class="catalog-card"
+            href="#hits"
+            data-category-card="sofa"
+          >
+            <div class="catalog-card-image">
+              <img
+                src="../images/sofa.png"
+                alt="Диваны и кресла"
+              >
+            </div>
+
+            <span>Диваны и кресла</span>
+          </a>
+
+          <a
+            class="catalog-card"
+            href="#hits"
+            data-category-card="office"
+          >
+            <div class="catalog-card-image">
+              <img
+                src="../images/chair.png"
+                alt="Столы и стулья"
+              >
+            </div>
+
+            <span>Столы и стулья</span>
+          </a>
+
+          <a
+            class="catalog-card"
+            href="#hits"
+            data-category-card="decor"
+          >
+            <div class="catalog-card-image">
+              <img
+                src="../images/lamp.png"
+                alt="Освещение и декор"
+              >
+            </div>
+
+            <span>Освещение и декор</span>
+          </a>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>
 
     <nav class="mobile-nav">
       <a href="#top">
@@ -140,7 +513,7 @@
     <main id="top">
       <div class="container">
         <section class="hero">
-          <img class="hero-image" src="/images/hero.png" alt="Современный интерьер">
+          <img class="hero-image" src="../images/hero.png" alt="Современный интерьер">
           <div class="hero-overlay"></div>
           <div class="hero-content">
             <span class="eyebrow">Коллекция сезона</span>
@@ -209,47 +582,46 @@
       <div class="container footer-grid">
         <section>
           <div class="footer-brand">
-            <img src="/images/image.png" alt="Золотая зебра">
+          <img src="../images/image.png" alt="Логотип Золотая зебра">
             <span>
               <strong>Золотая зебра</strong>
               <small>мебель</small>
             </span>
+            
           </div>
+         <p class="footer-text">
+       8 800 000-00-00<br>
+      Ежедневно с 9:00 до 21:00<br>
+       <a href="mailto:info@zolotaya-zebra.example"></a>
+              </p>
           <p class="footer-text">Мебель для красивой и комфортной жизни.</p>
-          <p class="footer-text">
-            8 800 000-00-00<br>
-            Ежедневно с 9:00 до 21:00<br>
-            <a href="mailto:info@zolotaya-zebra.example">info@zolotaya-zebra.example</a>
-          </p>
-          <div class="socials">
-            <a class="social" href="#">VK</a>
-            <a class="social" href="#">Telegram</a>
-            <a class="social" href="#">YouTube</a>
-          </div>
+         
+         
         </section>
 
         <section>
+          
           <h3 class="footer-title">Покупателям</h3>
           <ul class="footer-list">
-            <li><a href="#">Доставка и оплата</a></li>
+            <li><a href="#">Доставка и сборка</a></li>
             <li><a href="#">Рассрочка</a></li>
-            <li><a href="#">Возврат товара</a></li>
-            <li><a href="#">Сборка мебели</a></li>
+            <li><a href="#">Написать письмо</a></li>
           </ul>
         </section>
 
         <section>
-          <h3 class="footer-title">О компании</h3>
+          <h3 class="footer-title">О компании</h3> 
           <ul class="footer-list">
-            <li><a href="#">О «Золотой зебре»</a></li>
-            <li><a href="#">Наши магазины</a></li>
-            <li><a href="#">Дизайнерам</a></li>
-            <li><a href="#">Контакты</a></li>
+            <li><a href="./manufacturers.html">Производители</a></li>
+            <li><a href="./stores.html">Наши магазины</a></li>
+         
+            <li><a href="#">Новости</a></li>
           </ul>
         </section>
 
         <section>
           <h3 class="footer-title">Новости и предложения</h3>
+          
           <form class="subscribe" id="subForm">
             <input type="email" required placeholder="Ваш e-mail">
             <button class="search-button" type="submit">OK</button>
@@ -257,8 +629,12 @@
           <p class="subscribe-message" id="subMsg">Только полезные новости и выгодные предложения.</p>
         </section>
       </div>
+      
 
       <div class="copyright">© 2026 «Золотая зебра». Все права защищены.</div>
     </footer>
+    <script src="./script.js"></script>
+  </body>
+</html>
   </body>
 </html>
