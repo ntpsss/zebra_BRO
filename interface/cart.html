@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Корзина — Золотая зебра</title>
+
+  <link rel="stylesheet" href="./style.css">
+
+  <style>
+    .cart-page {
+      padding: 42px 0 70px;
+    }
+
+    .cart-page h1 {
+      margin: 0;
+      font-size: clamp(36px, 5vw, 58px);
+    }
+
+    .cart-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 24px;
+      margin-top: 28px;
+    }
+
+    .cart-items {
+      display: grid;
+      gap: 14px;
+    }
+
+    .cart-item {
+      display: grid;
+      grid-template-columns: 120px minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: center;
+      padding: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      transition: opacity .25s, background .25s;
+    }
+
+    .cart-item-image {
+      width: 120px;
+      height: 100px;
+      overflow: hidden;
+      border-radius: 12px;
+      background: #eee;
+    }
+
+    .cart-item-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .cart-item-title {
+      margin: 0;
+      font-family: var(--sans);
+      font-size: 17px;
+    }
+
+    .cart-item-price {
+      margin-top: 6px;
+      color: var(--gold-dark);
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .cart-item-actions {
+      display: flex;
+      align-items: center;
+    }
+
+    .cart-quantity {
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .cart-quantity button {
+      width: 34px;
+      height: 34px;
+      color: var(--ink);
+      background: var(--gold-soft);
+      border: 0;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    .cart-quantity button:hover {
+      background: var(--gold-light);
+    }
+
+    .cart-quantity span {
+      min-width: 32px;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    .cart-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .cart-remove,
+    .cart-restore {
+      padding: 0;
+      color: var(--muted);
+      background: transparent;
+      border: 0;
+      font-size: 12px;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    .cart-remove:hover {
+      color: #b64a31;
+    }
+
+    .cart-restore {
+      color: var(--gold-dark);
+      font-weight: 700;
+    }
+
+    .cart-restore:hover {
+      color: var(--gold);
+    }
+
+    .cart-item-removed {
+      opacity: .55;
+      background: #f3f0eb;
+    }
+
+    .cart-item-removed .cart-quantity {
+      pointer-events: none;
+      opacity: .4;
+    }
+
+    .cart-summary {
+      height: max-content;
+      padding: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .cart-summary h2 {
+      font-size: 28px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 14px;
+      color: var(--muted);
+    }
+
+    .summary-total {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .checkout-button {
+      width: 100%;
+      margin-top: 20px;
+      padding: 14px;
+      color: #fff;
+      background: var(--gold);
+      border: 0;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .checkout-button:hover {
+      background: var(--gold-dark);
+    }
+
+    .empty-cart {
+      padding: 54px 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      text-align: center;
+    }
+
+    .empty-cart h2 {
+      font-size: 30px;
+    }
+
+    .empty-cart p {
+      color: var(--muted);
+    }
+
+    .empty-cart a {
+      display: inline-flex;
+      margin-top: 18px;
+      padding: 12px 20px;
+      color: #fff;
+      background: var(--gold);
+      border-radius: 10px;
+      font-weight: 700;
+    }
+
+    @media (max-width: 800px) {
+      .cart-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .cart-summary {
+        order: -1;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .cart-item {
+        grid-template-columns: 80px minmax(0, 1fr);
+        gap: 12px;
+      }
+
+      .cart-item-image {
+        width: 80px;
+        height: 80px;
+      }
+
+      .cart-item-actions {
+        grid-column: 1 / -1;
+        justify-content: flex-end;
+      }
+
+      .cart-item-title {
+        font-size: 15px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="container">
+      <div class="header-main">
+        <a class="brand" href="./index.html">
+          <img
+            class="brand-logo-full"
+            src="../images/logo.png"
+            alt="Золотая зебра"
+          >
+        </a>
+
+        <a
+          class="catalog-button"
+          href="./index.html#hits"
+        >
+          Продолжить покупки
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="cart-page">
+    <div class="container">
+      <h1>Корзина</h1>
+
+      <div id="cart-page-content"></div>
+    </div>
+  </main>
+ <div id="footer-container"></div>
+  <script>
+    const products = [
+      [
+        'Диван «Зебра»',
+        'sofa.png',
+        89990,
+        62990
+      ],
+      [
+        'Кровать «Аристократ» 160×200',
+        'bed.png',
+        74990,
+        52490
+      ],
+      [
+        'Кресло «Адель»',
+        'chair.png',
+        29990,
+        20990
+      ],
+      [
+        'Стул «Золотой»',
+        'chair-gold.png',
+        8990,
+        6290
+      ],
+      [
+        'Шкаф «Версаль»',
+        'wardrobe.png',
+        109990,
+        76990
+      ],
+      [
+        'Кухня «Модерн»',
+        'kitchen.png',
+        189990,
+        132990
+      ],
+      [
+        'Торшер «Шампань»',
+        'lamp.png',
+        15990,
+        11190
+      ]
+    ];
+
+    const content = document.querySelector(
+      '#cart-page-content'
+    );
+
+    const formatPrice = (price) => {
+      return `${price.toLocaleString('ru-RU')} ₽`;
+    };
+
+    let cart = JSON.parse(
+      localStorage.getItem('zebraCart') || '{}'
+    );
+
+    const removalTimers = new Map();
+
+    const saveCart = () => {
+      localStorage.setItem(
+        'zebraCart',
+        JSON.stringify(cart)
+      );
+    };
+
+    const calculateCart = () => {
+      let count = 0;
+      let total = 0;
+
+      Object.entries(cart).forEach(
+        ([productIndex, quantity]) => {
+          const product =
+            products[Number(productIndex)];
+
+          if (!product || quantity <= 0) {
+            return;
+          }
+
+          count += quantity;
+          total += product[3] * quantity;
+        }
+      );
+
+      return {
+        count,
+        total
+      };
+    };
+
+    const render = () => {
+      const entries = Object.entries(cart)
+        .filter(([, quantity]) => quantity > 0);
+
+      if (entries.length === 0) {
+        content.innerHTML = `
+          <div class="empty-cart">
+            <h2>Корзина пока пуста</h2>
+
+            <p>
+              Добавьте понравившиеся товары,
+              и они появятся здесь.
+            </p>
+
+            <a href="./index.html#hits">
+              Перейти к товарам
+            </a>
+          </div>
+        `;
+
+        return;
+      }
+
+      const cartData = calculateCart();
+
+      const items = entries
+        .map(([key, quantity]) => {
+          const index = Number(key);
+          const product = products[index];
+
+          return `
+            <article
+              class="cart-item"
+              data-cart-item="${index}"
+            >
+              <div class="cart-item-image">
+                <img
+                  src="../images/${product[1]}"
+                  alt="${product[0]}"
+                  onerror="this.onerror=null; this.src='../images/fallback.png'"
+                >
+              </div>
+
+              <div>
+                <h2 class="cart-item-title">
+                  ${product[0]}
+                </h2>
+
+                <div class="cart-item-price">
+                  ${formatPrice(product[3])}
+                </div>
+
+                <div class="cart-actions">
+                  <button
+                    class="cart-remove"
+                    data-remove="${index}"
+                    type="button"
+                  >
+                    Удалить
+                  </button>
+
+                  <button
+                    class="cart-restore"
+                    data-restore="${index}"
+                    type="button"
+                    hidden
+                  >
+                    Вернуть
+                  </button>
+                </div>
+              </div>
+
+              <div class="cart-item-actions">
+                <div class="cart-quantity">
+                  <button
+                    data-minus="${index}"
+                    type="button"
+                  >
+                    −
+                  </button>
+
+                  <span>
+                    ${quantity}
+                  </span>
+
+                  <button
+                    data-plus="${index}"
+                    type="button"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            </article>
+          `;
+        })
+        .join('');
+
+      content.innerHTML = `
+        <div class="cart-layout">
+          <div class="cart-items">
+            ${items}
+          </div>
+
+          <aside class="cart-summary">
+            <h2>Ваш заказ</h2>
+
+            <div class="summary-row">
+              <span>Товары</span>
+              <span>${cartData.count} шт.</span>
+            </div>
+
+            <div class="summary-row">
+              <span>Доставка</span>
+              <span>Рассчитаем позже</span>
+            </div>
+
+            <div class="summary-total">
+              <span>Итого</span>
+              <span>${formatPrice(cartData.total)}</span>
+            </div>
+
+            <button
+              class="checkout-button"
+              id="checkout"
+              type="button"
+            >
+              Перейти к оформлению
+            </button>
+          </aside>
+        </div>
+      `;
+    };
+
+    content.addEventListener('click', (event) => {
+      const plusButton =
+        event.target.closest('[data-plus]');
+
+      const minusButton =
+        event.target.closest('[data-minus]');
+
+      const removeButton =
+        event.target.closest('[data-remove]');
+
+      const restoreButton =
+        event.target.closest('[data-restore]');
+
+      const checkoutButton =
+        event.target.closest('#checkout');
+
+      if (plusButton) {
+        const index = plusButton.dataset.plus;
+
+        cart[index] = (cart[index] || 0) + 1;
+
+        saveCart();
+        render();
+
+        return;
+      }
+
+      if (minusButton) {
+        const index = minusButton.dataset.minus;
+
+        cart[index] = (cart[index] || 0) - 1;
+
+        if (cart[index] <= 0) {
+          delete cart[index];
+        }
+
+        saveCart();
+        render();
+
+        return;
+      }
+
+      if (removeButton) {
+        const index = removeButton.dataset.remove;
+
+        const item = document.querySelector(
+          `[data-cart-item="${index}"]`
+        );
+
+        if (!item) {
+          return;
+        }
+
+        item.classList.add(
+          'cart-item-removed'
+        );
+
+        removeButton.hidden = true;
+
+        const restoreButtonInItem =
+          item.querySelector('[data-restore]');
+
+        if (restoreButtonInItem) {
+          restoreButtonInItem.hidden = false;
+        }
+
+        const timer = window.setTimeout(() => {
+          delete cart[index];
+          removalTimers.delete(index);
+
+          saveCart();
+          render();
+        }, 5000);
+
+        removalTimers.set(index, timer);
+
+        return;
+      }
+
+      if (restoreButton) {
+        const index = restoreButton.dataset.restore;
+        const timer = removalTimers.get(index);
+
+        if (timer) {
+          window.clearTimeout(timer);
+          removalTimers.delete(index);
+        }
+
+        const item = document.querySelector(
+          `[data-cart-item="${index}"]`
+        );
+
+        if (!item) {
+          return;
+        }
+
+        item.classList.remove(
+          'cart-item-removed'
+        );
+
+        restoreButton.hidden = true;
+
+        const removeButtonInItem =
+          item.querySelector('[data-remove]');
+
+        if (removeButtonInItem) {
+          removeButtonInItem.hidden = false;
+        }
+
+        return;
+      }
+
+      if (checkoutButton) {
+        alert(
+          'Оформление заказа будет доступно после подключения сервера.'
+        );
+      }
+    });
+
+    render();
+  </script>
+</body>
+</html>

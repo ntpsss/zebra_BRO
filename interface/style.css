@@ -116,12 +116,7 @@ svg {
   flex-shrink: 0;
 }
 
-.brand-logo {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  object-fit: cover;
-}
+
 
 .brand-name {
   display: block;
@@ -887,31 +882,7 @@ h2 {
   grid-column: 1 / -1;
 }
 
-.footer-brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
 
-.footer-brand img {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.footer-brand strong {
-  display: block;
-  color: var(--white);
-  font-size: 20px;
-}
-
-.footer-brand small {
-  color: var(--gold-light);
-  font-size: 11px;
-  letter-spacing: 0.25em;
-  text-transform: uppercase;
-}
 
 .footer-text {
   margin: 16px 0 0;
@@ -1182,7 +1153,477 @@ h2 {
   }
 }
 
-/* Секция старых категорий скрыта */
-#cats {
+/* =========================================================
+   ФИНАЛЬНАЯ НАСТРОЙКА ЛОГОТИПА И ШАПКИ
+   ========================================================= */
+
+/*
+  В HTML должно быть:
+
+  <div class="header-main">
+    <a class="brand" href="#top">
+      <img
+        class="brand-logo-full"
+        src="../images/logo.png"
+        alt="Золотая зебра"
+      >
+    </a>
+
+    <div class="catalog">
+      ...
+    </div>
+
+    <form class="search-form desktop-search">
+      ...
+    </form>
+
+    <nav class="account-nav desktop-account">
+      ...
+    </nav>
+  </div>
+*/
+
+/* Убираем старые автоматические отступы */
+.header-spacer {
   display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Строка шапки */
+.header-main {
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Логотип */
+.brand {
+  order: 1;
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  width: auto;
+  height: 58px;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/*
+  Если в самом logo.png есть белое поле справа,
+  оно визуально создаёт расстояние.
+  Контейнер обрезает лишнее пространство.
+*/
+.brand-logo-full {
+  width: 155px;
+  height: 58px;
+  display: block;
+  margin: 0;
+  padding: 0;
+  object-fit: contain;
+  object-position: left center;
+  border: 0;
+  border-radius: 0 !important;
+}
+
+/* Каталог */
+.catalog {
+  position: relative;
+  order: 2;
+  display: block;
+  flex: 0 0 auto;
+  width: auto;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.catalog-button {
+  height: 48px;
+  margin: 0;
+  white-space: nowrap;
+}
+
+/* Поиск */
+.desktop-search {
+  order: 3;
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  margin: 0;
+}
+
+/* Блок избранного, входа и корзины */
+.desktop-account {
+  order: 4;
+  display: flex;
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+/* На desktop */
+@media (min-width: 1024px) {
+  .header-main {
+    gap: 6px;
+  }
+
+  .brand-logo-full {
+    width: 155px;
+    height: 58px;
+  }
+
+  .catalog {
+    display: block;
+  }
+
+  .desktop-search {
+    display: flex;
+  }
+
+  .desktop-account {
+    display: flex;
+  }
+}
+
+/* Планшет */
+@media (max-width: 1023px) {
+  .header-main {
+    gap: 5px;
+  }
+
+  .brand-logo-full {
+    width: 145px;
+    height: 50px;
+  }
+}
+
+/* Мобильный экран */
+@media (max-width: 650px) {
+  .header-main {
+    gap: 4px;
+  }
+
+  .brand-logo-full {
+    width: 135px;
+    height: 46px;
+  }
+}
+
+/* Очень узкий экран */
+@media (max-width: 420px) {
+  .header-main {
+    gap: 3px;
+  }
+
+  .brand-logo-full {
+    width: 120px;
+    height: 42px;
+  }
+}
+
+/* Логотип в подвале */
+.footer-brand {
+  display: block;
+  margin: 0;
+  padding: 0;
+}
+
+.footer-brand-logo-full {
+  width: 260px;
+  height: 82px;
+  display: block;
+  margin: 0;
+  object-fit: contain;
+  object-position: left center;
+  border: 0;
+  border-radius: 0 !important;
+}
+
+@media (max-width: 767px) {
+  .footer-brand-logo-full {
+    width: 230px;
+    height: 72px;
+  }
+}
+/* =========================================================
+   МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ
+   ========================================================= */
+
+.auth-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background-color: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+}
+
+.auth-overlay.hidden {
+  display: none !important;
+}
+
+body.auth-is-open {
+  overflow: hidden;
+}
+
+.auth-modal {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  padding: 32px 28px 24px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.18);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+.auth-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.auth-modal-header h2 {
+  margin: 0;
+  color: #1a1a1a;
+  font-family: inherit;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.auth-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  color: #7b7b7b;
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.auth-close:hover {
+  color: #1a1a1a;
+  background: #f3f3f3;
+}
+
+.auth-close svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 2.5;
+}
+
+/* Поле ввода телефона */
+.auth-phone-input {
+  width: 100%;
+  height: 52px;
+  padding: 0 16px;
+  color: #222;
+  font-size: 17px;
+  background: #ffffff;
+  border: 1px solid #333333;
+  border-radius: 12px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.auth-phone-input:focus {
+  border-color: #d60012;
+  box-shadow: 0 0 0 2px rgba(214, 0, 18, 0.15);
+}
+
+.auth-phone-input::placeholder {
+  color: #9c9c9c;
+}
+
+/* Кнопка "Войти" */
+.auth-btn-primary {
+  width: 100%;
+  height: 50px;
+  margin-top: 18px;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  background-color: #d60012;
+  border: 0;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: background-color 0.15s, transform 0.1s;
+}
+
+.auth-btn-primary:hover {
+  background-color: #bd0010;
+}
+
+.auth-btn-primary:active {
+  transform: scale(0.99);
+}
+
+/* Разделитель "или" */
+.auth-divider {
+  margin: 16px 0;
+  color: #4a4a4a;
+  font-size: 15px;
+  text-align: center;
+}
+
+/* Социальные кнопки */
+.auth-socials {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Кнопка VK */
+.auth-btn-vk {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  height: 50px;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 500;
+  background-color: #0077ff;
+  border: 0;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.auth-btn-vk:hover {
+  background-color: #0066dc;
+}
+
+.auth-vk-icon {
+  width: 24px;
+  height: 24px;
+}
+
+/* Кнопка Яндекс */
+.auth-btn-ya {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 50px;
+  padding: 0 10px;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 500;
+  background-color: #000000;
+  border: 0;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.auth-btn-ya:hover {
+  background-color: #1f1f1f;
+}
+
+.ya-badge {
+  position: absolute;
+  left: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  color: #ffffff;
+  font-size: 19px;
+  font-weight: 700;
+  background-color: #fc3f1d;
+  border-radius: 50%;
+}
+
+.ya-text {
+  flex: 1;
+  text-align: center;
+}
+
+.ya-avatar {
+  position: absolute;
+  right: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2px solid #8e52f5;
+  background-color: #1a1a1a;
+}
+
+.ya-avatar svg {
+  width: 20px;
+  height: 20px;
+  stroke: #ffffff;
+}
+
+/* Соглашение и политика */
+.auth-legal {
+  margin: 22px 0 0;
+  color: #9e9e9e;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.auth-legal a {
+  color: #9e9e9e;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.auth-legal a:hover {
+  color: #666666;
+}
+/* Стопка инпутов формы регистрации */
+.auth-fields-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth-fields-stack .auth-btn-primary {
+  margin-top: 6px;
+}
+
+/* Строка переключения между Входом и Регистрацией */
+.auth-toggle-row {
+  margin-top: 18px;
+  color: #666666;
+  font-size: 14px;
+  text-align: center;
+}
+
+.auth-link-action {
+  margin-left: 4px;
+  padding: 0;
+  color: #d60012;
+  font-weight: 600;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.auth-link-action:hover {
+  color: #bd0010;
 }

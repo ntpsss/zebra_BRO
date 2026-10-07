@@ -1,3 +1,4 @@
+
 const $ = (selector) => {
   return document.querySelector(selector);
 };
@@ -352,13 +353,44 @@ if (carousel) {
                 </span>
               </div>
 
-              <button
-                class="buy-button"
-                data-buy="${index}"
-                type="button"
-              >
-                В корзину
-              </button>
+             <div
+  class="quantity-control"
+  data-quantity-control="${index}"
+  hidden
+>
+  <button
+    class="quantity-button"
+    data-quantity-minus="${index}"
+    type="button"
+    aria-label="Уменьшить количество"
+  >
+    −
+  </button>
+
+  <span
+    class="quantity-value"
+    data-quantity-value="${index}"
+  >
+    0
+  </span>
+
+  <button
+    class="quantity-button"
+    data-quantity-plus="${index}"
+    type="button"
+    aria-label="Увеличить количество"
+  >
+    +
+  </button>
+</div>
+
+<button
+  class="buy-button"
+  data-buy="${index}"
+  type="button"
+>
+  В корзину
+</button>
             </div>
           </article>
         `;
@@ -370,13 +402,153 @@ if (carousel) {
 /* =========================================================
    ИЗБРАННОЕ И КОРЗИНА
    ========================================================= */
+/* =========================================================
+   ИЗБРАННОЕ И КОРЗИНА
+   ========================================================= */
 
 const favorites = new Set();
+
+const savedCart = JSON.parse(
+  localStorage.getItem('zebraCart') || '{}'
+);
+
+const cartItems = new Map(
+  Object.entries(savedCart).map(
+    ([productIndex, quantity]) => [
+      Number(productIndex),
+      Number(quantity)
+    ]
+  )
+);
 
 const cart = {
   count: 0,
   total: 0
 };
+
+cartItems.forEach((quantity, productIndex) => {
+  cart.count += quantity;
+  cart.total += products[productIndex][3] * quantity;
+});
+
+const saveCart = () => {
+  const cartObject = {};
+
+  cartItems.forEach((quantity, productIndex) => {
+    cartObject[productIndex] = quantity;
+  });
+
+  localStorage.setItem(
+    'zebraCart',
+    JSON.stringify(cartObject)
+  );
+};
+
+const updateCartHeader = () => {
+  const cartBadge = $('#cartBadge');
+  const cartSum = $('#cartSum');
+
+  if (cartBadge) {
+    cartBadge.textContent = cart.count;
+  }
+
+  if (cartSum) {
+    cartSum.textContent = formatPrice(cart.total);
+  }
+};
+
+const updateProductQuantity = (productIndex) => {
+  const quantity =
+    cartItems.get(productIndex) || 0;
+
+  const quantityControl = document.querySelector(
+    `[data-quantity-control="${productIndex}"]`
+  );
+
+  const quantityValue = document.querySelector(
+    `[data-quantity-value="${productIndex}"]`
+  );
+
+  const buyButton = document.querySelector(
+    `[data-buy="${productIndex}"]`
+  );
+
+  if (
+    !quantityControl ||
+    !quantityValue ||
+    !buyButton
+  ) {
+    return;
+  }
+
+  quantityValue.textContent = quantity;
+
+  if (quantity > 0) {
+    quantityControl.hidden = false;
+    buyButton.hidden = true;
+  } else {
+    quantityControl.hidden = true;
+    buyButton.hidden = false;
+  }
+};
+
+const updateAllProductQuantities = () => {
+  products.forEach((_, productIndex) => {
+    updateProductQuantity(productIndex);
+  });
+};
+
+const addProductToCart = (productIndex) => {
+  const currentQuantity =
+    cartItems.get(productIndex) || 0;
+
+  cartItems.set(
+    productIndex,
+    currentQuantity + 1
+  );
+
+  cart.count += 1;
+  cart.total += products[productIndex][3];
+
+  saveCart();
+  updateProductQuantity(productIndex);
+  updateCartHeader();
+};
+
+const removeProductFromCart = (productIndex) => {
+  const currentQuantity =
+    cartItems.get(productIndex) || 0;
+
+  if (currentQuantity <= 0) {
+    return;
+  }
+
+  const newQuantity = currentQuantity - 1;
+
+  if (newQuantity <= 0) {
+    cartItems.delete(productIndex);
+  } else {
+    cartItems.set(productIndex, newQuantity);
+  }
+
+  cart.count -= 1;
+  cart.total -= products[productIndex][3];
+
+  if (cart.count < 0) {
+    cart.count = 0;
+  }
+
+  if (cart.total < 0) {
+    cart.total = 0;
+  }
+
+  saveCart();
+  updateProductQuantity(productIndex);
+  updateCartHeader();
+};
+
+updateAllProductQuantities();
+updateCartHeader();
 
 if (carousel) {
   carousel.addEventListener('click', (event) => {
@@ -385,6 +557,12 @@ if (carousel) {
 
     const buyButton =
       event.target.closest('[data-buy]');
+
+    const plusButton =
+      event.target.closest('[data-quantity-plus]');
+
+    const minusButton =
+      event.target.closest('[data-quantity-minus]');
 
     if (favoriteButton) {
       const productIndex = Number(
@@ -405,8 +583,11 @@ if (carousel) {
       const favoriteBadge = $('#favBadge');
 
       if (favoriteBadge) {
-        favoriteBadge.textContent = favorites.size;
+        favoriteBadge.textContent =
+          favorites.size;
       }
+
+      return;
     }
 
     if (buyButton) {
@@ -414,29 +595,28 @@ if (carousel) {
         buyButton.dataset.buy
       );
 
-      cart.count += 1;
-      cart.total += products[productIndex][3];
+      addProductToCart(productIndex);
+      return;
+    }
 
-      const cartBadge = $('#cartBadge');
-      const cartSum = $('#cartSum');
+    if (plusButton) {
+      const productIndex = Number(
+        plusButton.dataset.quantityPlus
+      );
 
-      if (cartBadge) {
-        cartBadge.textContent = cart.count;
-      }
+      addProductToCart(productIndex);
+      return;
+    }
 
-      if (cartSum) {
-        cartSum.textContent = formatPrice(cart.total);
-      }
+    if (minusButton) {
+      const productIndex = Number(
+        minusButton.dataset.quantityMinus
+      );
 
-      buyButton.textContent = 'Добавлено ✓';
-
-      window.setTimeout(() => {
-        buyButton.textContent = 'В корзину';
-      }, 1200);
+      removeProductFromCart(productIndex);
     }
   });
 }
-
 /* =========================================================
    ПРОКРУТКА КАРУСЕЛИ
    ========================================================= */
@@ -553,3 +733,204 @@ if (subscriptionForm) {
     }
   );
 }
+/* =========================================================
+   АВТОРИЗАЦИЯ И РЕГИСТРАЦИЯ
+   ========================================================= */
+
+const loginButton = $('#login-button');
+const loginButtonText = $('#login-button-text');
+
+const authOverlay = $('#auth-overlay');
+const authClose = $('#auth-close');
+
+const loginView = $('#login-view');
+const registerView = $('#register-view');
+
+const openRegisterButton = $('#open-register');
+const openLoginButton = $('#open-login');
+
+const loginForm = $('#login-form');
+const registerForm = $('#register-form');
+
+const vkLoginButton = $('#vk-login');
+const yandexLoginButton = $('#yandex-login');
+
+const openAuthModal = () => {
+  if (!authOverlay) {
+    return;
+  }
+
+  authOverlay.classList.remove('hidden');
+  authOverlay.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('auth-is-open');
+
+  const phoneInput = $('#login-phone');
+
+  if (phoneInput) {
+    window.setTimeout(() => {
+      phoneInput.focus();
+    }, 100);
+  }
+};
+
+const closeAuthModal = () => {
+  if (!authOverlay) {
+    return;
+  }
+
+  authOverlay.classList.add('hidden');
+  authOverlay.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('auth-is-open');
+};
+
+const showLoginView = () => {
+  if (loginView) {
+    loginView.hidden = false;
+  }
+
+  if (registerView) {
+    registerView.hidden = true;
+  }
+};
+
+const showRegisterView = () => {
+  if (loginView) {
+    loginView.hidden = true;
+  }
+
+  if (registerView) {
+    registerView.hidden = false;
+  }
+};
+
+if (loginButton) {
+  loginButton.addEventListener('click', (event) => {
+    event.preventDefault();
+    openAuthModal();
+  });
+}
+
+if (authClose) {
+  authClose.addEventListener('click', closeAuthModal);
+}
+
+if (authOverlay) {
+  authOverlay.addEventListener('click', (event) => {
+    if (event.target === authOverlay) {
+      closeAuthModal();
+    }
+  });
+}
+
+if (openRegisterButton) {
+  openRegisterButton.addEventListener(
+    'click',
+    showRegisterView
+  );
+}
+
+if (openLoginButton) {
+  openLoginButton.addEventListener(
+    'click',
+    showLoginView
+  );
+}
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') {
+    closeAuthModal();
+  }
+});
+
+if (loginForm) {
+  loginForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+
+    const phoneInput = $('#login-phone');
+    const phone = phoneInput.value.trim();
+
+    if (!phone) {
+      return;
+    }
+
+    localStorage.setItem(
+      'zebraUser',
+      JSON.stringify({
+        phone,
+        isLoggedIn: true
+      })
+    );
+
+    updateLoginState();
+    closeAuthModal();
+  });
+}
+
+if (registerForm) {
+  registerForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+
+    const nameInput = $('#register-name');
+    const phoneInput = $('#register-phone');
+    const emailInput = $('#register-email');
+
+    const user = {
+      name: nameInput.value.trim(),
+      phone: phoneInput.value.trim(),
+      email: emailInput.value.trim(),
+      isLoggedIn: true
+    };
+
+    localStorage.setItem(
+      'zebraUser',
+      JSON.stringify(user)
+    );
+
+    updateLoginState();
+    closeAuthModal();
+    registerForm.reset();
+  });
+}
+
+if (vkLoginButton) {
+  vkLoginButton.addEventListener('click', () => {
+    alert(
+      'В реальном проекте здесь будет подключение VK ID.'
+    );
+  });
+}
+
+if (yandexLoginButton) {
+  yandexLoginButton.addEventListener('click', () => {
+    alert(
+      'В реальном проекте здесь будет подключение Яндекс ID.'
+    );
+  });
+}
+
+const updateLoginState = () => {
+  if (!loginButtonText) {
+    return;
+  }
+
+  const savedUser = localStorage.getItem('zebraUser');
+
+  if (!savedUser) {
+    loginButtonText.textContent = 'Войти';
+    return;
+  }
+
+  try {
+    const user = JSON.parse(savedUser);
+
+    if (user.isLoggedIn) {
+      loginButtonText.textContent =
+        user.name || 'Профиль';
+    }
+  } catch (error) {
+    localStorage.removeItem('zebraUser');
+    loginButtonText.textContent = 'Войти';
+  }
+};
+
+updateLoginState();

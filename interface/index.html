@@ -62,54 +62,95 @@
 
     <header class="site-header">
       <div class="container">
-        <div class="header-main">
-          <a class="brand" href="#top">
-           <img class="brand-logo" src="../images/image.png" alt="Логотип Золотая зебра">
-            <span>
-              <span class="brand-name">Золотая зебра</span>
-              <span class="brand-caption">мебель</span>
-            </span>
-          </a>
-<div class="catalog">
-  <button
-    class="catalog-button"
-    id="catalog-button"
-    type="button"
-    aria-expanded="false"
+   <div class="header-main">
+  <a
+    class="brand"
+    href="#top"
+    aria-label="Золотая зебра — главная"
+  >
+    <img
+      class="brand-logo-full"
+      src="../images/logo.png"
+      alt="Золотая зебра"
+    >
+  </a>
+
+  <div class="catalog">
+    <button
+      class="catalog-button"
+      id="catalog-button"
+      type="button"
+      aria-expanded="false"
+    >
+      <svg>
+        <use href="#grid"></use>
+      </svg>
+
+      Каталог
+    </button>
+  </div>
+
+  <form
+    class="search-form desktop-search"
+    id="desktop-search"
   >
     <svg>
-      <use href="#grid"></use>
-    </svg>Каталог
-  </button>
+      <use href="#search"></use>
+    </svg>
+
+    <input
+      id="desktop-query"
+      type="search"
+      placeholder="Поиск мебели, декора и товаров для дома"
+    >
+  </form>
+
+  <nav class="account-nav desktop-account">
+    <a class="account-link" href="#">
+      <svg>
+        <use href="#heart"></use>
+      </svg>
+
+      <span class="badge" id="favBadge">0</span>
+      <span>Избранное</span>
+    </a>
+
+ <a
+  class="account-link"
+  href="#"
+  id="login-button"
+>
+  <svg>
+    <use href="#user"></use>
+  </svg>
+
+  <span id="login-button-text">
+    Войти
+  </span>
+</a>
+
+   <a
+  class="account-link"
+  href="./cart.html"
+  aria-label="Корзина"
+>
+  <svg>
+    <use href="#bag"></use>
+  </svg>
+
+  <span
+    class="badge"
+    id="cartBadge"
+  >
+    0
+  </span>
+
+  <span id="cartSum">
+    0 ₽
+  </span>
+</a>
+  </nav>
 </div>
-
-          <form class="search-form desktop-search" id="desktop-search">
-            <svg><use href="#search"></use></svg>
-            
-            <input id="desktop-query" type="search" placeholder="Поиск мебели, декора и товаров для дома">
-            
-            
-          </form>
-
-          <span class="header-spacer"></span>
-
-          <nav class="account-nav desktop-account">
-            <a class="account-link" href="#">
-              <svg><use href="#heart"></use></svg>
-              <span class="badge" id="favBadge">0</span>
-              <span>Избранное</span>
-            </a>
-            <a class="account-link" href="#">
-              <svg><use href="#user"></use></svg>
-              <span>Войти</span>
-            </a>
-            <a class="account-link" href="#">
-              <svg><use href="#bag"></use></svg>
-              <span class="badge" id="cartBadge">0</span>
-              <span id="cartSum">0 ₽</span>
-            </a>
-          </nav>
-        </div>
 
         <form class="search-form mobile-search" id="mobile-search">
           <svg><use href="#search"></use></svg>
@@ -522,15 +563,6 @@
             <a class="hero-button" href="#cats">Смотреть коллекцию</a>
           </div>
         </section>
-
-        <section class="section" id="cats">
-          <div class="section-heading">
-            <div class="eyebrow">Найдите свой стиль</div>
-            <h2>Категории мебели</h2>
-          </div>
-          <div class="category-grid" id="quickCats"></div>
-        </section>
-
         <section class="section" id="hits">
           <div class="products-heading">
             <div>
@@ -581,17 +613,11 @@
     <footer class="site-footer" id="footer">
       <div class="container footer-grid">
         <section>
-          <div class="footer-brand">
-          <img src="../images/image.png" alt="Логотип Золотая зебра">
-            <span>
-              <strong>Золотая зебра</strong>
-              <small>мебель</small>
-            </span>
-            
-          </div>
+          <h3 class = "footer-title">Информация о магазине</h3>
          <p class="footer-text">
-       8 800 000-00-00<br>
-      Ежедневно с 9:00 до 21:00<br>
+          Общий номер телефона <br>
+      +7 (473) 207-207-8<br>
+      Ежедневно с 9:00 до 18:00<br>
        <a href="mailto:info@zolotaya-zebra.example"></a>
               </p>
           <p class="footer-text">Мебель для красивой и комфортной жизни.</p>
@@ -633,8 +659,125 @@
 
       <div class="copyright">© 2026 «Золотая зебра». Все права защищены.</div>
     </footer>
+      <!-- Модальное окно авторизации -->
+<!-- Модальное окно авторизации и регистрации -->
+<div class="auth-overlay hidden" id="auth-overlay" aria-hidden="true">
+  <div class="auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+    
+    <div class="auth-modal-header">
+      <h2 id="auth-title">Введите номер телефона</h2>
+      <button class="auth-close" id="auth-close" type="button" aria-label="Закрыть окно">
+        <svg viewBox="0 0 24 24">
+          <use href="#x"></use>
+        </svg>
+      </button>
+    </div>
+
+    <!-- ЭКРАН ВХОДА -->
+    <div id="login-view">
+      <form id="login-form">
+        <input
+          class="auth-phone-input"
+          id="login-phone"
+          type="tel"
+          placeholder="+7 999 999 99 99"
+          autocomplete="tel"
+          required
+        >
+        <button class="auth-btn-primary" type="submit">
+          Войти
+        </button>
+      </form>
+
+      <div class="auth-divider">или</div>
+
+      <div class="auth-socials">
+        <!-- Кнопка VK ID -->
+        <button class="auth-btn-vk" id="vk-login" type="button">
+          <svg class="auth-vk-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M15.684 0H8.316C3.592 0 0 3.592 0 8.316v7.368C0 20.408 3.592 24 8.316 24h7.368C20.408 24 24 20.408 24 15.684V8.316C24 3.592 20.408 0 15.684 0Zm4.364 17.067h-1.898c-.718 0-.938-.57-.223-1.802 1.344-1.399 2.036-2.617 2.036-2.617.432-.61.32-.907-.227-.907h-2.115c-.537 0-.785.285-1.002.793 0 0-1.077 2.62-2.602 4.32-.494.49-.72.645-.989.645-.135 0-.33-.155-.33-.6V12.65c0-.58-.168-.84-.653-.84h-3.32c-.37 0-.59.274-.59.535 0 .55.823.676.908 2.22v3.356c0 .736-.134.87-.426.87-.78 0-2.678-2.633-3.805-5.642-.224-.607-.44-.852-.98-.852H2.2c-.6 0-.72.285-.72.6 0 .563.722 3.356 3.356 7.047 1.758 2.52 4.233 3.886 6.486 3.886 1.353 0 1.52-.304 1.52-.828v-1.705c0-.608.13-.728.56-.728.315 0 .855.16 2.115 1.373 1.442 1.442 1.68 2.088 2.49 2.088h1.898c.6 0 .9-.3.727-.89-.188-.588-.868-1.443-1.77-2.455-.49-.58-.12-.89 0-1.085l.168-.236Z"/>
+          </svg>
+          Войти через VK ID
+        </button>
+
+        <!-- Кнопка Яндекс ID -->
+        <button class="auth-btn-ya" id="yandex-login" type="button">
+          <span class="ya-badge">Я</span>
+          <span class="ya-text">Войти с Яндекс ID</span>
+          <span class="ya-avatar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M12 2a5 5 0 0 1 5 5v1a5 5 0 0 1-10 0V7a5 5 0 0 1 5-5Z"/>
+              <path d="M4 21a8 8 0 0 1 16 0"/>
+            </svg>
+          </span>
+        </button>
+      </div>
+
+      <div class="auth-toggle-row">
+        Нет аккаунта?
+        <button class="auth-link-action" id="open-register" type="button">
+          Зарегистрироваться
+        </button>
+      </div>
+
+      <p class="auth-legal">
+        Входя в личный кабинет, вы принимаете
+        <a href="#">пользовательское соглашение</a> и
+        <a href="#">политику конфиденциальности</a>, даете
+        <a href="#">согласие</a> на обработку ваших ПДн,
+        <a href="#">включая их передачу</a>.
+      </p>
+    </div>
+
+    <!-- ЭКРАН РЕГИСТРАЦИИ -->
+    <div id="register-view" hidden>
+      <form id="register-form" class="auth-fields-stack">
+        <input
+          class="auth-phone-input"
+          id="register-name"
+          type="text"
+          placeholder="Имя"
+          autocomplete="name"
+          required
+        >
+        <input
+          class="auth-phone-input"
+          id="register-phone"
+          type="tel"
+          placeholder="+7 999 999 99 99"
+          autocomplete="tel"
+          required
+        >
+        <input
+          class="auth-phone-input"
+          id="register-email"
+          type="email"
+          placeholder="E-mail"
+          autocomplete="email"
+          required
+        >
+        <button class="auth-btn-primary" type="submit">
+          Зарегистрироваться
+        </button>
+      </form>
+
+      <div class="auth-toggle-row">
+        Уже есть аккаунт?
+        <button class="auth-link-action" id="open-login" type="button">
+          Войти
+        </button>
+      </div>
+
+      <p class="auth-legal">
+        Регистрируясь, вы принимаете
+        <a href="#">пользовательское соглашение</a> и
+        <a href="#">политику конфиденциальности</a>, даете
+        <a href="#">согласие</a> на обработку ваших ПДн.
+      </p>
+    </div>
+
+  </div>
+</div>
     <script src="./script.js"></script>
-  </body>
-</html>
   </body>
 </html>
