@@ -1,149 +1,532 @@
+```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Производители мебели — Золотая зебра.">
-  <title>Производители — Золотая зебра</title>
+
+  <title>Админ-панель — Золотая зебра</title>
+
   <link rel="stylesheet" href="./style.css">
+
   <style>
-    .page-header{padding:56px 0 36px;text-align:center}
-    .page-header h1{margin:10px 0 0;font-size:clamp(36px,6vw,64px)}
-    .page-header p{max-width:680px;margin:16px auto 0;color:var(--muted);font-size:18px}
-    .manufacturer-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;padding-bottom:56px}
-    .manufacturer-card{display:flex;flex-direction:column;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);transition:transform .2s,box-shadow .2s}
-    .manufacturer-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-large)}
-    .manufacturer-cover{height:190px;background:#eee}
-    .manufacturer-cover img{width:100%;height:100%;object-fit:cover}
-    .manufacturer-content{display:flex;flex:1;flex-direction:column;padding:22px}
-    .manufacturer-logo{width:64px;height:64px;display:grid;place-items:center;margin-top:-52px;margin-bottom:14px;color:var(--gold-dark);background:var(--surface);border:4px solid var(--surface);border-radius:16px;box-shadow:var(--shadow);font-family:Georgia,serif;font-size:26px;font-weight:700}
-    .manufacturer-name{margin:0;font-family:var(--serif);font-size:25px}
-    .manufacturer-country{margin-top:5px;color:var(--gold-dark);font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
-    .manufacturer-description{margin:14px 0;color:var(--muted);font-size:14px}
-    .manufacturer-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto;padding-top:12px}
-    .manufacturer-tag{padding:6px 10px;color:var(--gold-dark);background:var(--gold-soft);border-radius:999px;font-size:12px}
-    .manufacturer-button{display:inline-flex;align-items:center;justify-content:center;margin-top:18px;padding:11px 16px;color:#fff;background:var(--gold);border-radius:10px;font-size:14px;font-weight:700}
-    .manufacturer-button:hover{background:var(--gold-dark)}
-    .manufacturer-form{margin:0 0 56px;padding:28px;background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow)}
-    .manufacturer-form h2{font-size:30px}
-    .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:20px}
-    .form-field{display:flex;flex-direction:column;gap:6px}.form-field.full{grid-column:1/-1}.form-field label{font-size:13px;font-weight:700}.form-field input,.form-field textarea{width:100%;padding:12px 14px;color:var(--ink);background:#f5f2ed;border:1px solid var(--border);border-radius:10px;outline:0}.form-field textarea{min-height:120px;resize:vertical}.form-field input:focus,.form-field textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-soft)}.form-submit{margin-top:18px;padding:12px 22px;color:#fff;background:var(--gold);border:0;border-radius:10px;font-weight:700;cursor:pointer}.form-submit:hover{background:var(--gold-dark)}.form-message{display:inline-block;margin-left:12px;color:var(--gold-dark);font-size:14px}
-    @media(max-width:900px){.manufacturer-grid{grid-template-columns:repeat(2,1fr)}}
-    @media(max-width:600px){.page-header{padding:36px 0 28px}.page-header p{font-size:16px}.manufacturer-grid{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.form-field.full{grid-column:auto}.form-message{display:block;margin:12px 0 0}}
-  </style>
-</head>
-<body>
-  <header class="site-header">
-    <div class="container">
-      <div class="header-main">
-        <a class="brand" href="./index.html">
-          <img class="brand-logo" src="../images/image.png" alt="Логотип Золотая зебра">
-          <span><span class="brand-name">Золотая зебра</span><span class="brand-caption">мебель</span></span>
-        </a>
-        <nav class="page-links" aria-label="Основная навигация">
-          <a href="./index.html">Главная</a>
-          <a class="active" href="./manufacturers.html">Производители</a>
-        </nav>
-      </div>
-    </div>
-  </header>
-
-  <main>
-    <div class="container">
-      <section class="page-header">
-        <div class="eyebrow">Наши партнёры</div>
-        <h1>Производители мебели</h1>
-        <p>Здесь можно разместить информацию о компаниях, брендах и фабриках, продукция которых представлена в магазине «Золотая зебра».</p>
-      </section>
-
-      <section class="manufacturer-form" aria-labelledby="form-title">
-        <h2 id="form-title">Добавить производителя</h2>
-        <form id="manufacturer-form">
-          <div class="form-grid">
-            <div class="form-field">
-              <label for="manufacturer-name">Название компании</label>
-              <input id="manufacturer-name" name="name" required placeholder="Например, Фабрика «Комфорт»">
-            </div>
-            <div class="form-field">
-              <label for="manufacturer-country">Страна</label>
-              <input id="manufacturer-country" name="country" placeholder="Россия, Италия, Беларусь">
-            </div>
-            <div class="form-field full">
-              <label for="manufacturer-description">Описание</label>
-              <textarea id="manufacturer-description" name="description" placeholder="Кратко расскажите о производителе"></textarea>
-            </div>
-            <div class="form-field">
-              <label for="manufacturer-specialization">Специализация</label>
-              <input id="manufacturer-specialization" name="specialization" placeholder="Диваны, спальни, кухни">
-            </div>
-            <div class="form-field">
-              <label for="manufacturer-site">Сайт</label>
-              <input id="manufacturer-site" name="site" type="url" placeholder="https://example.com">
-            </div>
-          </div>
-          <button class="form-submit" type="submit">Добавить карточку</button>
-          <span class="form-message" id="form-message"></span>
-        </form>
-      </section>
-
-      <section class="manufacturer-grid" id="manufacturer-list" aria-label="Список производителей"></section>
-    </div>
-  </main>
-
-  <footer class="site-footer">
-    <div class="copyright">© 2026 «Золотая зебра». Все права защищены.</div>
-  </footer>
-
-  <script>
-    const manufacturers = [
-      {name:'Фабрика «Комфорт»',country:'Россия',description:'Производитель мягкой мебели для гостиных, офисов и общественных пространств.',specialization:'Диваны · Кресла',site:'https://example.com',image:'../images/sofa.png',logo:'К'},
-      {name:'Nordic Home',country:'Беларусь',description:'Коллекции мебели в современном скандинавском стиле с акцентом на практичность.',specialization:'Спальни · Гостиные',site:'https://example.com',image:'../images/bedroom.png',logo:'N'},
-      {name:'Linea Casa',country:'Италия',description:'Элегантная корпусная мебель и интерьерные решения для современных домов.',specialization:'Кухни · Шкафы',site:'https://example.com',image:'../images/kitchen.png',logo:'L'}
-    ];
-
-    const list = document.querySelector('#manufacturer-list');
-
-    function renderManufacturers() {
-      list.innerHTML = manufacturers.map((manufacturer) => `
-        <article class="manufacturer-card">
-          <div class="manufacturer-cover">
-            <img src="${manufacturer.image}" alt="${manufacturer.name}" onerror="this.src='../images/fallback.png'">
-          </div>
-          <div class="manufacturer-content">
-            <div class="manufacturer-logo">${manufacturer.logo}</div>
-            <h2 class="manufacturer-name">${manufacturer.name}</h2>
-            <div class="manufacturer-country">${manufacturer.country}</div>
-            <p class="manufacturer-description">${manufacturer.description}</p>
-            <div class="manufacturer-meta"><span class="manufacturer-tag">${manufacturer.specialization}</span></div>
-            <a class="manufacturer-button" href="${manufacturer.site}" target="_blank" rel="noopener noreferrer">Сайт производителя</a>
-          </div>
-        </article>
-      `).join('');
+    .admin-header {
+      padding: 56px 0 36px;
+      text-align: center;
     }
 
-    renderManufacturers();
+    .admin-header h1 {
+      margin: 10px 0 0;
+      font-size: clamp(36px, 6vw, 64px);
+    }
 
-    document.querySelector('#manufacturer-form').addEventListener('submit', (event) => {
-      event.preventDefault();
-      const form = event.currentTarget;
-      const data = new FormData(form);
-      const name = data.get('name').trim();
-      const site = data.get('site').trim();
+    .admin-header p {
+      max-width: 680px;
+      margin: 16px auto 0;
+      color: var(--muted);
+      font-size: 18px;
+    }
 
-      manufacturers.push({
-        name,
-        country: data.get('country').trim() || 'Страна не указана',
-        description: data.get('description').trim() || 'Описание производителя пока не добавлено.',
-        specialization: data.get('specialization').trim() || 'Мебель для дома',
-        site: site || '#',
-        image: '../images/fallback.png',
-        logo: name.charAt(0).toUpperCase()
-      });
+    /* Форма */
 
-      renderManufacturers();
-      form.reset();
-      document.querySelector('#form-message').textContent = 'Карточка добавлена.';
-    });
-  </script>
+    .admin-form {
+      margin-bottom: 56px;
+      padding: 30px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .admin-form h2 {
+      margin-top: 0;
+      font-size: 30px;
+    }
+
+    .form-description {
+      margin-bottom: 24px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .form-field.full {
+      grid-column: 1 / -1;
+    }
+
+    .form-field label {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .form-field input,
+    .form-field textarea,
+    .form-field select {
+      width: 100%;
+      padding: 12px 14px;
+
+      color: var(--ink);
+      background: #f5f2ed;
+
+      border: 1px solid var(--border);
+      border-radius: 10px;
+
+      outline: none;
+      font-family: inherit;
+    }
+
+    .form-field textarea {
+      min-height: 130px;
+      resize: vertical;
+    }
+
+    .form-field input:focus,
+    .form-field textarea:focus,
+    .form-field select:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px var(--gold-soft);
+    }
+
+    .form-submit {
+      margin-top: 22px;
+      padding: 13px 24px;
+
+      color: #fff;
+      background: var(--gold);
+
+      border: 0;
+      border-radius: 10px;
+
+      font-weight: 700;
+      cursor: pointer;
+
+      transition: background .2s, transform .2s;
+    }
+
+    .form-submit:hover {
+      background: var(--gold-dark);
+      transform: translateY(-1px);
+    }
+
+    .form-message {
+      margin-left: 12px;
+      color: var(--gold-dark);
+      font-size: 14px;
+    }
+
+    /* Список товаров */
+
+    .products-section {
+      padding-bottom: 56px;
+    }
+
+    .products-section h2 {
+      margin-bottom: 20px;
+      font-size: 30px;
+    }
+
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .product-card {
+      padding: 20px;
+
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+
+      box-shadow: var(--shadow);
+
+      transition: transform .2s, box-shadow .2s;
+    }
+
+    .product-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-large);
+    }
+
+    .product-image {
+      height: 180px;
+      margin-bottom: 18px;
+
+      overflow: hidden;
+
+      background: #eee;
+      border-radius: 12px;
+    }
+
+    .product-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .product-name {
+      margin: 0;
+      font-family: var(--serif);
+      font-size: 23px;
+    }
+
+    .product-category {
+      margin-top: 6px;
+
+      color: var(--gold-dark);
+
+      font-size: 12px;
+      font-weight: 700;
+
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .product-description {
+      margin: 12px 0;
+
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .product-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      margin-top: 16px;
+      padding-top: 14px;
+
+      border-top: 1px solid var(--border);
+    }
+
+    .product-price {
+      color: var(--gold-dark);
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .product-stock {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    /* Адаптив */
+
+    @media (max-width: 900px) {
+      .products-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .admin-header {
+        padding: 36px 0 28px;
+      }
+
+      .admin-header p {
+        font-size: 16px;
+      }
+
+      .admin-form {
+        padding: 22px;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .form-field.full {
+        grid-column: auto;
+      }
+
+      .form-message {
+        display: block;
+        margin: 12px 0 0;
+      }
+
+      .products-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<header class="site-header">
+  <div class="container">
+
+    <div class="header-main">
+
+      <a class="brand" href="./index.html">
+
+        <img
+          class="brand-logo"
+          src="../images/image.png"
+          alt="Логотип Золотая зебра"
+        >
+
+        <span>
+          <span class="brand-name">Золотая зебра</span>
+          <span class="brand-caption">мебель</span>
+        </span>
+
+      </a>
+
+      <nav class="page-links" aria-label="Основная навигация">
+        <a href="./index.html">Главная</a>
+        <a href="./manufacturers.html">Производители</a>
+        <a class="active" href="./admin.html">Админ-панель</a>
+      </nav>
+
+    </div>
+
+  </div>
+</header>
+
+
+<main>
+
+  <div class="container">
+
+    <!-- Заголовок -->
+
+    <section class="admin-header">
+
+      <div class="eyebrow">
+        Управление магазином
+      </div>
+
+      <h1>
+        Админ-панель
+      </h1>
+
+      <p>
+        Добавляйте новые товары в каталог магазина
+        «Золотая зебра».
+      </p>
+
+    </section>
+
+
+    <!-- Форма добавления -->
+
+    <section class="admin-form">
+
+      <h2>
+        Добавить товар
+      </h2>
+
+      <p class="form-description">
+        Заполните информацию о новом товаре.
+      </p>
+
+
+      <form id="product-form">
+
+        <div class="form-grid">
+
+          <!-- Название -->
+
+          <div class="form-field">
+
+            <label for="product-name">
+              Название товара
+            </label>
+
+            <input
+              id="product-name"
+              name="name"
+              type="text"
+              required
+              placeholder="Например, Диван «Милан»"
+            >
+
+          </div>
+
+
+          <!-- Цена -->
+
+          <div class="form-field">
+
+            <label for="product-price">
+              Цена
+            </label>
+
+            <input
+              id="product-price"
+              name="price"
+              type="number"
+              min="0"
+              required
+              placeholder="59990"
+            >
+
+          </div>
+
+
+          <!-- Категория -->
+
+          <div class="form-field">
+
+            <label for="product-category">
+              Категория
+            </label>
+
+            <select
+              id="product-category"
+              name="categoryId"
+              required
+            >
+
+              <option value="">
+                Выберите категорию
+              </option>
+
+              <option value="1">
+                Диваны
+              </option>
+
+              <option value="2">
+                Кресла
+              </option>
+
+              <option value="3">
+                Кровати
+              </option>
+
+              <option value="4">
+                Шкафы
+              </option>
+
+              <option value="5">
+                Столы
+              </option>
+
+              <option value="6">
+                Стулья
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <!-- Количество -->
+
+          <div class="form-field">
+
+            <label for="product-stock">
+              Количество на складе
+            </label>
+
+            <input
+              id="product-stock"
+              name="stock"
+              type="number"
+              min="0"
+              required
+              placeholder="10"
+            >
+
+          </div>
+
+
+          <!-- Изображение -->
+
+          <div class="form-field full">
+
+            <label for="product-image">
+              Ссылка на изображение
+            </label>
+
+            <input
+              id="product-image"
+              name="image"
+              type="url"
+              placeholder="https://example.com/sofa.jpg"
+            >
+
+          </div>
+
+
+          <!-- Описание -->
+
+          <div class="form-field full">
+
+            <label for="product-description">
+              Описание
+            </label>
+
+            <textarea
+              id="product-description"
+              name="description"
+              placeholder="Опишите характеристики и особенности товара"
+            ></textarea>
+
+          </div>
+
+        </div>
+
+
+        <button
+          class="form-submit"
+          type="submit"
+        >
+          Добавить товар
+        </button>
+
+        <span
+          class="form-message"
+          id="form-message"
+        ></span>
+
+      </form>
+
+    </section>
+
+
+    <!-- Список товаров -->
+
+    <section class="products-section">
+
+      <h2>
+        Товары
+      </h2>
+
+      <div
+        class="products-grid"
+        id="products-list"
+      ></div>
+
+    </section>
+
+  </div>
+
+</main>
+
+
+<footer class="site-footer">
+
+  <div class="copyright">
+    © 2026 «Золотая зебра». Все права защищены.
+  </div>
+
+</footer>
+<script src="/logic/admin_panel.js"></script>
 </body>
 </html>
+```
