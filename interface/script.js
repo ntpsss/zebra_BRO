@@ -18,71 +18,75 @@ const imagePath = (fileName) => {
 const fallbackImage = imagePath('fallback.png');
 
 /* =========================================================
-   ПОЛНОЭКРАННЫЙ КАТАЛОГ
+   ПЕРЕКЛЮЧЕНИЕ ПАНЕЛИ КАТАЛОГА
    ========================================================= */
 
 const catalogButton = $('#catalog-button');
+const mobileCatalogButton = $('#mobile-catalog-button');
 const catalogPanel = $('#catalog-panel');
 const catalogClose = $('#catalog-close');
+const catalogIcon = $('[data-catalog-icon]');
 
-const openCatalog = () => {
-  if (!catalogPanel) {
-    return;
+const setCatalogOpen = (isOpen) => {
+  if (!catalogPanel) return;
+
+  catalogPanel.classList.toggle('hidden', !isOpen);
+  catalogPanel.setAttribute('aria-hidden', String(!isOpen));
+  document.body.classList.toggle('catalog-is-open', isOpen);
+
+  [catalogButton, mobileCatalogButton].forEach((button) => {
+    if (button) {
+      button.setAttribute('aria-expanded', String(isOpen));
+    }
+  });
+
+  if (catalogIcon) {
+    catalogIcon.setAttribute('href', isOpen ? '#x' : '#grid');
   }
 
-  catalogPanel.classList.remove('hidden');
-  document.body.classList.add('catalog-is-open');
-
   if (catalogButton) {
-    catalogButton.setAttribute('aria-expanded', 'true');
+    catalogButton.classList.toggle('is-open', isOpen);
   }
 };
 
-const closeCatalog = () => {
-  if (!catalogPanel) {
-    return;
-  }
-
-  catalogPanel.classList.add('hidden');
-  document.body.classList.remove('catalog-is-open');
-
-  if (catalogButton) {
-    catalogButton.setAttribute('aria-expanded', 'false');
-  }
+const toggleCatalog = (event) => {
+  event.stopPropagation();
+  setCatalogOpen(catalogPanel.classList.contains('hidden'));
 };
 
 if (catalogButton && catalogPanel) {
-  catalogButton.addEventListener('click', (event) => {
-    event.stopPropagation();
+  catalogButton.addEventListener('click', toggleCatalog);
+}
 
-    const isCatalogClosed =
-      catalogPanel.classList.contains('hidden');
+if (mobileCatalogButton && catalogPanel) {
+  mobileCatalogButton.addEventListener('click', toggleCatalog);
+}
 
-    if (isCatalogClosed) {
-      openCatalog();
-    } else {
-      closeCatalog();
+if (catalogClose) {
+  catalogClose.addEventListener('click', () => setCatalogOpen(false));
+}
+
+if (catalogPanel) {
+  catalogPanel.addEventListener('click', (event) => {
+    if (event.target.closest('a')) {
+      setCatalogOpen(false);
     }
   });
 }
 
-if (catalogClose) {
-  catalogClose.addEventListener('click', closeCatalog);
-}
-
 document.addEventListener('click', (event) => {
-  const clickedInsideCatalog = event.target.closest(
-    '#catalog-panel, #catalog-button'
-  );
-
-  if (!clickedInsideCatalog) {
-    closeCatalog();
+  if (
+    catalogPanel &&
+    !catalogPanel.classList.contains('hidden') &&
+    !event.target.closest('#catalog-panel, #catalog-button, #mobile-catalog-button')
+  ) {
+    setCatalogOpen(false);
   }
 });
 
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') {
-    closeCatalog();
+    setCatalogOpen(false);
   }
 });
 
@@ -93,6 +97,7 @@ document.addEventListener('keydown', (event) => {
 const categoryButtons = $$('.catalog-category');
 const categoryCards = $$('[data-category-card]');
 const categoryTitle = $('#catalog-category-title');
+const emptyCatalogMessage = $('#catalog-empty');
 
 const categoryTitles = {
   all: 'Выбирайте мебель для дома',
@@ -103,8 +108,11 @@ const categoryTitles = {
   mattresses: 'Матрасы',
   wardrobe: 'Шкафы-купе',
   living: 'Мебель для гостиной',
+  'living-rooms': 'Гостиные',
+  sofa: 'Диваны и кресла',
   hallway: 'Прихожие',
   office: 'Компьютерные и письменные столы',
+  decor: 'Освещение и декор',
   shoe: 'Обувницы',
   chests: 'Тумбы и комоды',
   wardrobes: 'Шкафы',
@@ -134,6 +142,8 @@ categoryButtons.forEach((button) => {
         categoryTitles.all;
     }
 
+    let visibleCardCount = 0;
+
     categoryCards.forEach((card) => {
       const cardCategory = card.dataset.categoryCard;
 
@@ -142,7 +152,15 @@ categoryButtons.forEach((button) => {
         cardCategory === selectedCategory;
 
       card.hidden = !shouldShow;
+      if (shouldShow) visibleCardCount += 1;
     });
+
+    if (emptyCatalogMessage) {
+      emptyCatalogMessage.classList.toggle(
+        'hidden',
+        visibleCardCount > 0
+      );
+    }
   });
 });
 
@@ -646,10 +664,7 @@ if (carousel && nextButton) {
    ПОИСК ПО ТОВАРАМ
    ========================================================= */
 
-const searchInputs = [
-  $('#desktop-query'),
-  $('#mobile-query')
-].filter(Boolean);
+const desktopSearchInput = $('#desktop-query');
 
 const filterProducts = (query) => {
   const normalizedQuery = query
@@ -672,17 +687,11 @@ const filterProducts = (query) => {
   });
 };
 
-searchInputs.forEach((input) => {
-  input.addEventListener('input', () => {
-    filterProducts(input.value);
-
-    searchInputs.forEach((otherInput) => {
-      if (otherInput !== input) {
-        otherInput.value = input.value;
-      }
-    });
+if (desktopSearchInput) {
+  desktopSearchInput.addEventListener('input', () => {
+    filterProducts(desktopSearchInput.value);
   });
-});
+}
 
 $('#desktop-search')?.addEventListener(
   'submit',
@@ -697,18 +706,7 @@ $('#desktop-search')?.addEventListener(
   }
 );
 
-$('#mobile-search')?.addEventListener(
-  'submit',
-  (event) => {
-    event.preventDefault();
 
-    const input = $('#mobile-query');
-
-    if (input) {
-      filterProducts(input.value);
-    }
-  }
-);
 
 /* =========================================================
    ПОДПИСКА
