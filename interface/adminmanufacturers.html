@@ -48,6 +48,50 @@
       font-size: 14px;
     }
 
+    .admin-form[hidden],
+    .admin-action-target[hidden] {
+      display: none;
+    }
+
+    .admin-action-selector {
+      max-width: 760px;
+      margin-bottom: 20px;
+    }
+
+    .admin-form[hidden] {
+      display: none;
+    }
+
+    .admin-action-target {
+      max-width: 760px;
+      margin-bottom: 20px;
+    }
+
+    .admin-form-heading {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 8px;
+    }
+
+    .form-close {
+      width: 38px;
+      height: 38px;
+      flex: 0 0 auto;
+      color: var(--muted);
+      background: var(--gold-soft);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .form-close:hover {
+      color: var(--ink);
+      background: var(--gold-light);
+    }
+
     .form-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -95,6 +139,43 @@
     .form-field select:focus {
       border-color: var(--gold);
       box-shadow: 0 0 0 3px var(--gold-soft);
+    }
+
+    .image-upload-hint {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .image-preview {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-height: 104px;
+      margin-top: 10px;
+      padding: 10px;
+      background: var(--gold-soft);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    .image-preview[hidden] {
+      display: none;
+    }
+
+    .image-preview img {
+      width: 120px;
+      height: 82px;
+      flex: 0 0 auto;
+      object-fit: cover;
+      background: var(--surface);
+      border-radius: 8px;
+    }
+
+    .image-preview-caption {
+      color: var(--muted);
+      font-size: 12px;
+      overflow-wrap: anywhere;
     }
 
     .form-submit {
@@ -385,15 +466,47 @@
 
     <!-- Форма добавления -->
 
-    <section class="admin-form">
+    <section class="admin-form admin-action-selector" aria-labelledby="admin-action-title">
+      <div class="form-field">
+        <label id="admin-action-title" for="admin-action">
+          Выберите действие
+        </label>
+        <select id="admin-action">
+          <option value="">Выберите действие</option>
+          <option value="add-product">Добавить товар</option>
+          <option value="add-category">Добавить категорию</option>
+          <option value="edit-product">Изменить товар</option>
+          <option value="edit-category">Изменить категорию</option>
+        </select>
+      </div>
+    </section>
 
-      <h2>
-        Добавить товар
-      </h2>
+    <section class="admin-form admin-action-target" id="product-target-panel" hidden>
+      <div class="form-field">
+        <label for="action-product-select">Выберите товар для изменения</label>
+        <select id="action-product-select">
+          <option value="">Сначала загрузите товары</option>
+        </select>
+      </div>
+    </section>
 
-      <p class="form-description">
-        Заполните информацию о новом товаре.
-      </p>
+    <section class="admin-form admin-action-target" id="category-target-panel" hidden>
+      <div class="form-field">
+        <label for="action-category-select">Выберите категорию для изменения</label>
+        <select id="action-category-select">
+          <option value="">Сначала загрузите категории</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="admin-form" id="add-product-panel" hidden>
+      <div class="admin-form-heading">
+        <div>
+          <h2>Добавить товар</h2>
+          <p class="form-description">Заполните информацию о новом товаре.</p>
+        </div>
+        <button class="form-close" type="button" data-close-form aria-label="Закрыть форму">×</button>
+      </div>
 
 
       <form id="product-form">
@@ -485,9 +598,8 @@
           <!-- Изображение -->
 
           <div class="form-field full">
-
             <label for="product-image">
-              Ссылка на изображение
+          Ссылка на изображение (необязательно)
             </label>
 
             <input
@@ -497,6 +609,25 @@
               placeholder="https://example.com/sofa.jpg"
             >
 
+          </div>
+
+          <div class="form-field full">
+            <label for="product-image-file">Загрузить изображение с устройства</label>
+            <input
+              id="product-image-file"
+              name="imageFile"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              aria-describedby="product-image-hint product-image-message"
+            >
+            <p class="image-upload-hint" id="product-image-hint">
+              JPG, PNG или WebP, не более 5 МБ.
+            </p>
+            <p class="form-message" id="product-image-message" role="status"></p>
+            <div class="image-preview" id="product-image-preview" hidden>
+              <img alt="Предпросмотр изображения товара">
+              <span class="image-preview-caption"></span>
+            </div>
           </div>
 
 
@@ -534,15 +665,15 @@
       </form>
 
     </section>
-    <section class="admin-form" aria-labelledby="category-form-title">
+    <section class="admin-form" id="add-category-panel" aria-labelledby="category-form-title" hidden>
 
-    <h2 id="category-form-title">
-        Добавить категорию
-    </h2>
-
-    <p class="form-description">
-        Создайте новую категорию для товаров магазина.
-    </p>
+    <div class="admin-form-heading">
+      <div>
+        <h2 id="category-form-title">Добавить категорию</h2>
+        <p class="form-description">Создайте новую категорию для товаров магазина.</p>
+      </div>
+      <button class="form-close" type="button" data-close-form aria-label="Закрыть форму">×</button>
+    </div>
 
     <form id="category-form">
 
@@ -585,45 +716,18 @@
 
   </div>
     <!-- ИЗМЕНЕНИЕ ТОВАРА -->
-<section class="admin-form">
-    <h2>Изменить товар</h2>
-
-    <p class="form-description">
-        Найдите товар и измените необходимые данные.
-    </p>
+<section class="admin-form" id="edit-product-panel" hidden>
+    <div class="admin-form-heading">
+      <div>
+        <h2>Изменить товар</h2>
+        <p class="form-description">Измените данные выбранного товара.</p>
+      </div>
+      <button class="form-close" type="button" data-close-form aria-label="Закрыть форму">×</button>
+    </div>
 
     <form id="edit-product-form">
 
-        <!-- ПОИСК ТОВАРА -->
-        <div class="form-field">
-            <label for="product-search">
-                Поиск товара
-            </label>
-
-            <input
-                id="product-search"
-                type="text"
-                placeholder="Введите название товара..."
-                autocomplete="off"
-            >
-        </div>
-
-        <!-- ВЫБОР ТОВАРА -->
-        <div class="form-field">
-            <label for="edit-product-select">
-                Товар
-            </label>
-
-            <select
-                id="edit-product-select"
-                name="productId"
-                required
-            >
-                <option value="">
-                    Выберите товар
-                </option>
-            </select>
-        </div>
+        <input id="edit-product-id" name="productId" type="hidden">
 
         <div class="form-grid">
 
@@ -670,6 +774,35 @@
                 </select>
             </div>
 
+            <div class="form-field full">
+                <label for="edit-product-image">Ссылка на изображение (необязательно)</label>
+                <input
+                    id="edit-product-image"
+                    name="image"
+                    type="url"
+                    placeholder="https://example.com/sofa.jpg"
+                >
+            </div>
+
+            <div class="form-field full">
+                <label for="edit-product-image-file">Заменить изображение с устройства</label>
+                <input
+                    id="edit-product-image-file"
+                    name="imageFile"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    aria-describedby="edit-product-image-hint edit-product-image-message"
+                >
+                <p class="image-upload-hint" id="edit-product-image-hint">
+                    JPG, PNG или WebP, не более 5 МБ. Если новый файл не выбран, изображение товара останется прежним.
+                </p>
+                <p class="form-message" id="edit-product-image-message" role="status"></p>
+                <div class="image-preview" id="edit-product-image-preview" hidden>
+                    <img alt="Текущее изображение товара">
+                    <span class="image-preview-caption"></span>
+                </div>
+            </div>
+
         </div>
 
         <button
@@ -689,45 +822,17 @@
 
 
 <!-- ИЗМЕНЕНИЕ КАТЕГОРИИ -->
-<section class="admin-form">
-    <h2>Изменить категорию</h2>
-
-    <p class="form-description">
-        Найдите категорию и измените её название.
-    </p>
+<section class="admin-form" id="edit-category-panel" hidden>
+    <div class="admin-form-heading">
+      <div>
+        <h2>Изменить категорию</h2>
+        <p class="form-description">Измените название выбранной категории.</p>
+      </div>
+      <button class="form-close" type="button" data-close-form aria-label="Закрыть форму">×</button>
+    </div>
 
     <form id="edit-category-form">
-
-        <!-- ПОИСК КАТЕГОРИИ -->
-        <div class="form-field">
-            <label for="category-search">
-                Поиск категории
-            </label>
-
-            <input
-                id="category-search"
-                type="text"
-                placeholder="Введите название категории..."
-                autocomplete="off"
-            >
-        </div>
-
-        <!-- ВЫБОР КАТЕГОРИИ -->
-        <div class="form-field">
-            <label for="edit-category-select">
-                Категория
-            </label>
-
-            <select
-                id="edit-category-select"
-                name="categoryId"
-                required
-            >
-                <option value="">
-                    Выберите категорию
-                </option>
-            </select>
-        </div>
+        <input id="edit-category-id" name="categoryId" type="hidden">
 
         <div class="form-field">
             <label for="edit-category-name">

@@ -1,117 +1,119 @@
+const API_URL = 'https://server-zebrabro.onrender.com/api';
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp'
+]);
+
 const list = document.querySelector('#products-list');
+const actionSelect = document.querySelector('#admin-action');
+const productTargetSelect = document.querySelector('#action-product-select');
+const categoryTargetSelect = document.querySelector('#action-category-select');
+const panels = {
+  addProduct: document.querySelector('#add-product-panel'),
+  addCategory: document.querySelector('#add-category-panel'),
+  editProduct: document.querySelector('#edit-product-panel'),
+  editCategory: document.querySelector('#edit-category-panel'),
+  productTarget: document.querySelector('#product-target-panel'),
+  categoryTarget: document.querySelector('#category-target-panel')
+};
 
 let categories = [];
 let products = [];
+const imagePreviewUrls = new WeakMap();
 
-//получение данных с сервера
-async function getCategories() {
-    const response = await fetch('https://server-zebrabro.onrender.com/api/categories', {
-      method: 'GET',
-      headers: {
-                'Content-Type': 'application/json'
-            }
-    });
-
-    const result = await response.json();
-    categories = result;
-    console.log(categories)
-    renderCategories();
-    renderProducts();
+function escapeHTML(value) {
+  return String(value ?? '').replace(
+    /[&<>"']/g,
+    (character) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    })[character]
+  );
 }
 
-async function getProducts() {
-  const message = document.querySelector('#products-message');
-  const count = document.querySelector('#products-count');
+function showMessage(element, text, state = '') {
+  if (!element) {
+    return;
+  }
 
-  try {
-    const response = await fetch('https://server-zebrabro.onrender.com/api/products', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`Сервер вернул ошибку ${response.status}.`);
-    }
-
-    const result = await response.json();
-    if (!Array.isArray(result)) {
-      throw new Error('Сервер вернул некорректный список товаров.');
-    }
-
-    products = result;
-    renderProducts();
-
-    if (message) {
-      message.textContent = '';
-      message.removeAttribute('data-state');
-    }
-
-    if (count) {
-      count.textContent = `${products.length} товаров`;
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Не удалось загрузить товары:', error);
-
-    if (message) {
-      message.textContent =
-        `Не удалось загрузить товары. ${error.message}`;
-      message.dataset.state = 'error';
-    }
-
-    if (count) {
-      count.textContent = 'Список недоступен';
-    }
-
-    return false;
+  element.textContent = text;
+  if (state) {
+    element.dataset.state = state;
+  } else {
+    element.removeAttribute('data-state');
   }
 }
 
-  //рендер полученных данных
-function renderCategories() {
+async function readResponse(response) {
+  const text = await response.text();
+  if (!text) {
+    return null;
+  }
 
-  const selects = [
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { message: text.slice(0, 240) };
+  }
+}
+
+async function request(path, options = {}) {
+  const response = await fetch(`${API_URL}${path}`, options);
+  const result = await readResponse(response);
+
+  if (!response.ok) {
+    const detail = typeof result?.message === 'string'
+      ? result.message
+      : typeof result?.error === 'string'
+        ? result.error
+        : `Сервер вернул ошибку ${response.status}.`;
+    throw new Error(detail);
+  }
+
+  return result;
+}
+
+function renderCategories() {
+  const categorySelects = [
     document.querySelector('#product-category'),
-    document.querySelector('#edit-category-select'),
-    document.querySelector('#edit-product-category')
+    document.querySelector('#edit-product-category'),
+    categoryTargetSelect
   ];
 
-  selects.forEach((select) => {
+  categorySelects.forEach((select) => {
     if (!select) {
       return;
     }
 
-    select.innerHTML = '<option value="">Выберите категорию</option>';
+    const placeholder = select === categoryTargetSelect
+      ? 'Выберите категорию'
+      : 'Выберите категорию';
+    select.replaceChildren(new Option(placeholder, ''));
 
     categories.forEach((category) => {
-      const option = document.createElement('option');
-
-      option.value = category.id;
-      option.textContent = category.name;
-
-      select.appendChild(option);
+      select.add(new Option(category.name, category.id));
     });
-
   });
+}
 
+function renderProductOptions() {
+  if (!productTargetSelect) {
+    return;
+  }
+
+  productTargetSelect.replaceChildren(new Option('Выберите товар', ''));
+  products.forEach((product) => {
+    productTargetSelect.add(new Option(product.name, product.id));
+  });
 }
 
 function renderProducts() {
-  const select = document.querySelector('#edit-product-select');
-
-  if (select) {
-    select.innerHTML = '<option value="">Выберите товар</option>';
-
-    products.forEach((product) => {
-      const option = document.createElement('option');
-      option.value = product.id;
-      option.textContent = product.name;
-      select.appendChild(option);
-    });
-  }
+  renderProductOptions();
 
   if (!list) {
     return;
@@ -126,26 +128,16 @@ function renderProducts() {
     return;
   }
 
-  const escapeHTML = (value) => String(value ?? '').replace(
-    /[&<>"']/g,
-    (character) => ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;'
-    })[character]
-  );
-
   list.innerHTML = products.map((product) => {
+    const productCategoryId = product.categoryId ?? product.category_id;
     const categoryName =
       product.category?.name ||
-      product.category ||
+      (typeof product.category === 'string' ? product.category : '') ||
       categories.find(
-        (category) => Number(category.id) === Number(product.categoryId)
+        (category) => String(category.id) === String(productCategoryId)
       )?.name ||
       'Без категории';
-    const image = product.image || '../images/fallback.png';
+    const image = product.image || product.imageUrl || product.image_url || '../images/fallback.png';
     const price = Number(product.price);
     const formattedPrice = Number.isFinite(price)
       ? `${price.toLocaleString('ru-RU')} ₽`
@@ -187,352 +179,416 @@ function renderProducts() {
   }).join('');
 }
 
+async function loadCategories() {
+  const result = await request('/categories');
+  if (!Array.isArray(result)) {
+    throw new Error('Сервер вернул некорректный список категорий.');
+  }
+
+  categories = result;
+  renderCategories();
+  renderProducts();
+}
+
+async function loadProducts() {
+  const result = await request('/products');
+  if (!Array.isArray(result)) {
+    throw new Error('Сервер вернул некорректный список товаров.');
+  }
+
+  products = result;
+  renderProducts();
+  const count = document.querySelector('#products-count');
+  if (count) {
+    count.textContent = `${products.length} товаров`;
+  }
+}
+
+function hideActionPanels() {
+  Object.values(panels).forEach((panel) => {
+    if (panel) {
+      panel.hidden = true;
+    }
+  });
+}
+
+function resetProductForm(form, previewId, fileInputId, previewMessageId) {
+  form.reset();
+  showMessage(document.querySelector(previewMessageId), '');
+  const fileInput = document.querySelector(fileInputId);
+  if (fileInput) {
+    fileInput.value = '';
+  }
+  setImagePreview(document.querySelector(previewId), '', '');
+}
+
+function closeAction() {
+  hideActionPanels();
+  if (actionSelect) {
+    actionSelect.value = '';
+  }
+  if (productTargetSelect) {
+    productTargetSelect.value = '';
+  }
+  if (categoryTargetSelect) {
+    categoryTargetSelect.value = '';
+  }
+}
+
+function setImagePreview(preview, src, caption) {
+  if (!preview) {
+    return;
+  }
+
+  const previousUrl = imagePreviewUrls.get(preview);
+  if (previousUrl) {
+    URL.revokeObjectURL(previousUrl);
+    imagePreviewUrls.delete(preview);
+  }
+
+  const image = preview.querySelector('img');
+  const label = preview.querySelector('.image-preview-caption');
+  if (!src) {
+    preview.hidden = true;
+    image.removeAttribute('src');
+    if (label) {
+      label.textContent = '';
+    }
+    return;
+  }
+
+  image.src = src;
+  preview.hidden = false;
+  if (label) {
+    label.textContent = caption;
+  }
+}
+
+function validateImage(file, messageElement) {
+  if (!file) {
+    showMessage(messageElement, '');
+    return true;
+  }
+
+  if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
+    showMessage(messageElement, 'Допустимы только изображения JPG, PNG или WebP.', 'error');
+    return false;
+  }
+
+  if (file.size > MAX_IMAGE_SIZE) {
+    showMessage(messageElement, 'Размер изображения не должен превышать 5 МБ.', 'error');
+    return false;
+  }
+
+  showMessage(messageElement, '');
+  return true;
+}
+
+function attachImagePreview(fileInputId, previewId, messageId) {
+  const input = document.querySelector(fileInputId);
+  const preview = document.querySelector(previewId);
+  const message = document.querySelector(messageId);
+  if (!input || !preview) {
+    return;
+  }
+
+  input.addEventListener('change', () => {
+    const file = input.files?.[0];
+    if (!file) {
+      showMessage(message, '');
+      return;
+    }
+
+    if (!validateImage(file, message)) {
+      input.value = '';
+      setImagePreview(preview, '', '');
+      return;
+    }
+
+    const url = URL.createObjectURL(file);
+    setImagePreview(preview, url, `Выбрано: ${file.name}`);
+    imagePreviewUrls.set(preview, url);
+  });
+}
+
+function fillProductForm(product) {
+  const form = document.querySelector('#edit-product-form');
+  form.elements.productId.value = product.id;
+  form.elements.name.value = product.name ?? '';
+  form.elements.price.value = product.price ?? '';
+  form.elements.categoryId.value = product.categoryId ?? product.category_id ?? '';
+  form.elements.image.value = product.imageUrl || product.image_url || '';
+
+  const currentImage = product.image || product.imageUrl || product.image_url || '';
+  setImagePreview(
+    document.querySelector('#edit-product-image-preview'),
+    currentImage,
+    currentImage ? 'Текущее изображение' : 'Для товара пока не задано изображение.'
+  );
+  showMessage(document.querySelector('#edit-product-image-message'), '');
+  document.querySelector('#edit-product-image-file').value = '';
+  panels.editProduct.hidden = false;
+  panels.productTarget.hidden = true;
+  panels.editProduct.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function fillCategoryForm(category) {
+  const form = document.querySelector('#edit-category-form');
+  form.elements.categoryId.value = category.id;
+  form.elements.name.value = category.name ?? '';
+  panels.editCategory.hidden = false;
+  panels.categoryTarget.hidden = true;
+  panels.editCategory.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+actionSelect?.addEventListener('change', () => {
+  hideActionPanels();
+  const action = actionSelect.value;
+
+  if (action === 'add-product') {
+    resetProductForm(
+      document.querySelector('#product-form'),
+      '#product-image-preview',
+      '#product-image-file',
+      '#product-image-message'
+    );
+    panels.addProduct.hidden = false;
+    panels.addProduct.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } else if (action === 'add-category') {
+    document.querySelector('#category-form').reset();
+    showMessage(document.querySelector('#category-form-message'), '');
+    panels.addCategory.hidden = false;
+    panels.addCategory.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } else if (action === 'edit-product') {
+    panels.productTarget.hidden = false;
+    productTargetSelect.value = '';
+    panels.productTarget.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } else if (action === 'edit-category') {
+    panels.categoryTarget.hidden = false;
+    categoryTargetSelect.value = '';
+    panels.categoryTarget.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+});
+
+productTargetSelect?.addEventListener('change', () => {
+  const product = products.find(
+    (item) => String(item.id) === productTargetSelect.value
+  );
+  if (product) {
+    fillProductForm(product);
+  }
+});
+
+categoryTargetSelect?.addEventListener('change', () => {
+  const category = categories.find(
+    (item) => String(item.id) === categoryTargetSelect.value
+  );
+  if (category) {
+    fillCategoryForm(category);
+  }
+});
+
+document.querySelectorAll('[data-close-form]').forEach((button) => {
+  button.addEventListener('click', closeAction);
+});
+
+attachImagePreview(
+  '#product-image-file',
+  '#product-image-preview',
+  '#product-image-message'
+);
+attachImagePreview(
+  '#edit-product-image-file',
+  '#edit-product-image-preview',
+  '#edit-product-image-message'
+);
+
+async function submitProductForm(form, isEdit) {
+  const data = new FormData(form);
+  const fileInput = form.querySelector('input[type="file"]');
+  const file = fileInput?.files?.[0];
+  const imageMessage = document.querySelector(
+    isEdit ? '#edit-product-image-message' : '#product-image-message'
+  );
+
+  if (!validateImage(file, imageMessage)) {
+    return;
+  }
+
+  const name = String(data.get('name') ?? '').trim();
+  const price = Number(data.get('price'));
+  const categoryId = Number(data.get('categoryId'));
+  const id = isEdit ? Number(data.get('productId')) : null;
+  const payload = { name, price, categoryId };
+  const imageUrl = String(data.get('image') ?? '').trim();
+
+  if (!file && imageUrl) {
+    payload.image = imageUrl;
+  }
+
+  const options = { method: isEdit ? 'PATCH' : 'POST' };
+  if (file) {
+    const uploadData = new FormData();
+    if (id !== null) {
+      uploadData.append('id', String(id));
+    }
+    uploadData.append('name', name);
+    uploadData.append('price', String(price));
+    uploadData.append('categoryId', String(categoryId));
+    uploadData.append('imageFile', file);
+    options.body = uploadData;
+  } else {
+    if (id !== null) {
+      payload.id = id;
+    }
+    options.headers = { 'Content-Type': 'application/json' };
+    options.body = JSON.stringify(payload);
+  }
+
+  const submitButton = form.querySelector('[type="submit"]');
+  submitButton.disabled = true;
+  const originalLabel = submitButton.textContent;
+  submitButton.textContent = isEdit ? 'Сохраняем...' : 'Добавляем...';
+
+  const message = document.querySelector(
+    isEdit ? '#edit-product-message' : '#form-message'
+  );
+  try {
+    await request('/products', options);
+    showMessage(message, isEdit ? 'Изменения сохранены.' : 'Товар успешно добавлен!', 'success');
+    await loadProducts();
+    if (isEdit) {
+      closeAction();
+    } else {
+      resetProductForm(
+        form,
+        '#product-image-preview',
+        '#product-image-file',
+        '#product-image-message'
+      );
+    }
+  } catch (error) {
+    console.error('Не удалось сохранить товар:', error);
+    showMessage(message, `Не удалось сохранить товар. ${error.message}`, 'error');
+  } finally {
+    submitButton.disabled = false;
+    submitButton.textContent = originalLabel;
+  }
+}
+
+document.querySelector('#product-form')?.addEventListener('submit', (event) => {
+  event.preventDefault();
+  submitProductForm(event.currentTarget, false);
+});
+
+document.querySelector('#edit-product-form')?.addEventListener('submit', (event) => {
+  event.preventDefault();
+  submitProductForm(event.currentTarget, true);
+});
+
+document.querySelector('#category-form')?.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const submitButton = form.querySelector('[type="submit"]');
+  const message = document.querySelector('#category-form-message');
+  submitButton.disabled = true;
+  try {
+    const name = String(new FormData(form).get('category') ?? '').trim();
+    await request('/categories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
+    });
+    showMessage(message, 'Категория успешно добавлена.', 'success');
+    form.reset();
+    await loadCategories();
+  } catch (error) {
+    console.error('Не удалось добавить категорию:', error);
+    showMessage(message, `Не удалось добавить категорию. ${error.message}`, 'error');
+  } finally {
+    submitButton.disabled = false;
+  }
+});
+
+document.querySelector('#edit-category-form')?.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const data = new FormData(form);
+  const submitButton = form.querySelector('[type="submit"]');
+  const message = document.querySelector('#edit-category-message');
+  submitButton.disabled = true;
+  try {
+    await request('/categories', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: Number(data.get('categoryId')),
+        name: String(data.get('name') ?? '').trim()
+      })
+    });
+    showMessage(message, 'Изменения категории сохранены.', 'success');
+    await loadCategories();
+    closeAction();
+  } catch (error) {
+    console.error('Не удалось изменить категорию:', error);
+    showMessage(message, `Не удалось изменить категорию. ${error.message}`, 'error');
+  } finally {
+    submitButton.disabled = false;
+  }
+});
+
 list?.addEventListener('click', async (event) => {
+  if (!(event.target instanceof Element)) {
+    return;
+  }
+
   const deleteButton = event.target.closest('[data-delete-product]');
   if (!deleteButton) {
     return;
   }
 
-  const productId = deleteButton.dataset.deleteProduct;
   const product = products.find(
-    (item) => String(item.id) === productId
+    (item) => String(item.id) === deleteButton.dataset.deleteProduct
   );
-
-  if (!product) {
-    return;
-  }
-
-  if (!window.confirm(`Удалить товар «${product.name}»?`)) {
+  if (!product || !window.confirm(`Удалить товар «${product.name}»?`)) {
     return;
   }
 
   const message = document.querySelector('#products-message');
   deleteButton.disabled = true;
   deleteButton.textContent = 'Удаляем...';
-
   try {
-    const response = await fetch(
-      'https://server-zebrabro.onrender.com/api/products',
-      {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ id: product.id })
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Сервер вернул ошибку ${response.status}.`);
-    }
-
-    const refreshed = await getProducts();
-    if (message) {
-      message.textContent = refreshed
-        ? `Товар «${product.name}» удалён.`
-        : `Товар «${product.name}» удалён, но список не удалось обновить.`;
-      message.dataset.state = refreshed ? 'success' : 'error';
-    }
+    await request(`/products/${encodeURIComponent(product.id)}`, {
+      method: 'DELETE',
+    });
+    await loadProducts();
+    showMessage(message, `Товар «${product.name}» удалён.`, 'success');
   } catch (error) {
     console.error('Не удалось удалить товар:', error);
-
-    if (message) {
-      message.textContent =
-        `Не удалось удалить товар. ${error.message}`;
-      message.dataset.state = 'error';
-    }
-
+    showMessage(message, `Не удалось удалить товар. ${error.message}`, 'error');
     deleteButton.disabled = false;
     deleteButton.textContent = 'Удалить товар';
   }
 });
-    //добавление данных на сервер
-document.querySelector('#category-form').addEventListener('submit', async (event) => {
-  event.preventDefault();
 
-  const form = event.currentTarget;
-  const data = new FormData(form);
+async function initializeAdmin() {
+  const message = document.querySelector('#products-message');
+  const count = document.querySelector('#products-count');
 
-  const name = data.get('category').trim();
-
-  const category = {
-    name: name
-  }
-  console.log(category)
   try {
-    const response = await fetch('https://server-zebrabro.onrender.com/api/categories', {
-      method: 'POST',
-
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(category)
-    })
-
-    const result = await response.json();
-
-    console.log('Ответ сервера:', result);
-
-    if (!response.ok) {
-        throw new Error(result.message || 'Ошибка сервера');
-    }
-
-    console.log('Товар добавлен:', result);
-
-  } catch (error) {
-    console.error('ОШИБКА:', error);
-
-    document.querySelector('#form-message').textContent =
-        'Ошибка при добавлении товара!';
-  }
-  
-  form.reset();
-  getCategories();
-});
-
-document.querySelector('#product-form').addEventListener('submit', async (event) => {
-
-    event.preventDefault();
-
-
-    const form = event.currentTarget;
-
-    const data = new FormData(form);
-
-
-    const name = data.get('name').trim();
-
-    const price = Number(data.get('price'));
-
-    const categoryId = Number(data.get('categoryId'));
-/*
-    const stock = Number(data.get('stock'));
-
-    const image = data.get('image').trim();
-
-    const description = data.get('description').trim();
-*/
-    console.log(categoryId)
-     
-      const product = {
-        name: name,
-        price: price,
-        categoryId: categoryId
+    const results = await Promise.allSettled([loadCategories(), loadProducts()]);
+    const failures = results.filter((result) => result.status === 'rejected');
+    if (failures.length) {
+      const details = failures.map((result) => result.reason.message).join(' ');
+      showMessage(message, `Не удалось загрузить данные админ-панели. ${details}`, 'error');
+      if (count) {
+        count.textContent = 'Список недоступен';
       }
-      try {
-
-    console.log('Отправляем на сервер:', product);
-
-    const response = await fetch(
-        'https://server-zebrabro.onrender.com/api/products',
-        {
-            method: 'POST',
-
-            headers: {
-                'Content-Type': 'application/json'
-            },
-
-            body: JSON.stringify(product)
-        }
-    );
-
-    const result = await response.json();
-
-    console.log('Ответ сервера:', result);
-
-    if (!response.ok) {
-        throw new Error(result.message || 'Ошибка сервера');
     }
-
-    console.log('Товар добавлен:', result);
-
-    document.querySelector('#form-message').textContent =
-        'Товар успешно добавлен!';
-
-    form.reset();
-    await getProducts();
-
-} catch (error) {
-
-    console.error('ОШИБКА:', error);
-
-    document.querySelector('#form-message').textContent =
-        'Ошибка при добавлении товара!';
+  } catch (error) {
+    console.error('Не удалось инициализировать админ-панель:', error);
+    showMessage(message, `Не удалось загрузить данные админ-панели. ${error.message}`, 'error');
+  }
 }
-});
 
-      //поисковики
-const categorySearch = document.querySelector('#category-search');
-const categorySelect = document.querySelector('#edit-category-select');
-
-categorySearch.addEventListener('input', () => {
-    const search = categorySearch.value.toLowerCase();
-
-    const filteredCategories = categories.filter(category =>
-        category.name.toLowerCase().includes(search)
-    );
-
-    categorySelect.innerHTML = `
-        <option value="">
-            Выберите категорию
-        </option>
-    `;
-
-    filteredCategories.forEach(category => {
-        const option = document.createElement('option');
-
-        option.value = category.id;
-        option.textContent = category.name;
-
-        categorySelect.appendChild(option);
-    });
-});
-
-const productSearch = document.querySelector('#product-search');
-const productSelect = document.querySelector('#edit-product-select');
-
-productSearch.addEventListener('input', () => {
-    const search = productSearch.value.toLowerCase();
-
-    const filteredProducts = products.filter(product =>
-        product.name.toLowerCase().includes(search)
-    );
-
-    productSelect.innerHTML = `
-        <option value="">
-            Выберите товар
-        </option>
-    `;
-
-    filteredProducts.forEach(product => {
-        const option = document.createElement('option');
-
-        option.value = product.id;
-        option.textContent = product.name;
-
-        productSelect.appendChild(option);
-    });
-});
-
-        //изменения значений
-document.querySelector('#edit-category-form').addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const form = event.currentTarget;
-  const data = new FormData(form);
-  const id = Number(data.get('categoryId'));
-  const newName = data.get('name').trim();
-
-  const patсhCategory = {
-    id: id,
-    name: newName
-  };
-  try {
-    const response = await fetch('https://server-zebrabro.onrender.com/api/categories', {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(patсhCategory)
-  });
-    const result = await response.json();
-  } catch (error) {
-    console.error('ОШИБКА:', error);
-
-    document.querySelector('#form-message').textContent =
-        'Ошибка при изменении товара!';
-  }
-  getProducts();
-  getCategories();
-});
-
-document.querySelector('#edit-product-form').addEventListener('submit', async (event) => {
-  event.preventDefault();
-
-  const form = event.currentTarget;
-  const data = new FormData(form);
-
-  const id = Number(data.get('productId'));
-  const newName = data.get('name').trim();
-  const newPrice = Number(data.get('price'));
-  const newCategoryId = Number(data.get('categoryId'));
-  const patchProduct = {
-    id: id,
-    name: newName,
-    price: newPrice,
-    categoryId: newCategoryId
-  }
-
-  try {
-    const response = await fetch('https://server-zebrabro.onrender.com/api/products', {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(patchProduct)
-    })
-
-    const result = await response.json();
-    console.log(result);
-  } catch (error) {
-    console.error('ОШИБКА:', error);
-
-    document.querySelector('#form-message').textContent =
-        'Ошибка при изменении товара!';
-  }
-  form.reset();
-  getProducts();
-  getCategories();
-});
-getProducts();
-getCategories();
-/*
-  function renderProducts() {
-
-    list.innerHTML = products.map((product) => `
-
-      <article class="product-card">
-
-        <div class="product-image">
-
-          <img
-            src="${product.image || '../images/fallback.png'}"
-            alt="${product.name}"
-            onerror="this.src='../images/fallback.png'"
-          >
-
-        </div>
-
-
-        <h3 class="product-name">
-          ${product.name}
-        </h3>
-
-
-        <div class="product-category">
-          ${product.category}
-        </div>
-
-
-        <p class="product-description">
-          ${product.description || 'Описание отсутствует.'}
-        </p>
-
-
-        <div class="product-bottom">
-
-          <div class="product-price">
-            ${product.price.toLocaleString('ru-RU')} ₽
-          </div>
-
-          <div class="product-stock">
-            На складе: ${product.stock}
-          </div>
-
-        </div>
-
-      </article>
-
-    `).join('');
-
-  }
-*/
+initializeAdmin();
