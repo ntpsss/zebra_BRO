@@ -16,20 +16,58 @@ async function getCategories() {
     categories = result;
     console.log(categories)
     renderCategories();
+    renderProducts();
 }
 
 async function getProducts() {
-  const response = await fetch('https://server-zebrabro.onrender.com/api/products', {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  });
+  const message = document.querySelector('#products-message');
+  const count = document.querySelector('#products-count');
 
-  const result = await response.json();
-  products = result;
-  renderProducts();
-  console.log(products);
+  try {
+    const response = await fetch('https://server-zebrabro.onrender.com/api/products', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Сервер вернул ошибку ${response.status}.`);
+    }
+
+    const result = await response.json();
+    if (!Array.isArray(result)) {
+      throw new Error('Сервер вернул некорректный список товаров.');
+    }
+
+    products = result;
+    renderProducts();
+
+    if (message) {
+      message.textContent = '';
+      message.removeAttribute('data-state');
+    }
+
+    if (count) {
+      count.textContent = `${products.length} товаров`;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Не удалось загрузить товары:', error);
+
+    if (message) {
+      message.textContent =
+        `Не удалось загрузить товары. ${error.message}`;
+      message.dataset.state = 'error';
+    }
+
+    if (count) {
+      count.textContent = 'Список недоступен';
+    }
+
+    return false;
+  }
 }
 
   //рендер полученных данных
@@ -42,40 +80,172 @@ function renderCategories() {
   ];
 
   selects.forEach((select) => {
+    if (!select) {
+      return;
+    }
 
-        categories.forEach((category) => {
+    select.innerHTML = '<option value="">Выберите категорию</option>';
 
-            const option = document.createElement('option');
+    categories.forEach((category) => {
+      const option = document.createElement('option');
 
-            option.value = category.id;
-            option.textContent = category.name;
+      option.value = category.id;
+      option.textContent = category.name;
 
-            select.appendChild(option);
-        });
-
+      select.appendChild(option);
     });
+
+  });
 
 }
 
 function renderProducts() {
-  const selectsProduct = [
-    document.querySelector('#edit-product-select')
-  ];
-    
-  selectsProduct.forEach((select) => {
+  const select = document.querySelector('#edit-product-select');
+
+  if (select) {
+    select.innerHTML = '<option value="">Выберите товар</option>';
 
     products.forEach((product) => {
-
       const option = document.createElement('option');
-
       option.value = product.id;
       option.textContent = product.name;
-
       select.appendChild(option);
-
     });
-  });
+  }
+
+  if (!list) {
+    return;
+  }
+
+  if (products.length === 0) {
+    list.innerHTML = `
+      <div class="products-empty">
+        В каталоге пока нет товаров. Добавьте первый товар с помощью формы выше.
+      </div>
+    `;
+    return;
+  }
+
+  const escapeHTML = (value) => String(value ?? '').replace(
+    /[&<>"']/g,
+    (character) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    })[character]
+  );
+
+  list.innerHTML = products.map((product) => {
+    const categoryName =
+      product.category?.name ||
+      product.category ||
+      categories.find(
+        (category) => Number(category.id) === Number(product.categoryId)
+      )?.name ||
+      'Без категории';
+    const image = product.image || '../images/fallback.png';
+    const price = Number(product.price);
+    const formattedPrice = Number.isFinite(price)
+      ? `${price.toLocaleString('ru-RU')} ₽`
+      : 'Цена не указана';
+
+    return `
+      <article class="admin-product-card">
+        <div class="admin-product-image">
+          <img
+            src="${escapeHTML(image)}"
+            alt="${escapeHTML(product.name)}"
+            onerror="this.onerror=null; this.src='../images/fallback.png'"
+          >
+        </div>
+
+        <h3 class="admin-product-name">${escapeHTML(product.name)}</h3>
+        <span class="admin-product-category">${escapeHTML(categoryName)}</span>
+        <p class="admin-product-description">
+          ${escapeHTML(product.description || 'Описание отсутствует.')}
+        </p>
+
+        <div class="admin-product-bottom">
+          <span class="admin-product-price">${formattedPrice}</span>
+          <span class="admin-product-stock">
+            На складе: ${escapeHTML(product.stock ?? '—')}
+          </span>
+        </div>
+
+        <button
+          class="admin-product-delete"
+          type="button"
+          data-delete-product="${escapeHTML(product.id)}"
+          aria-label="Удалить товар ${escapeHTML(product.name)}"
+        >
+          Удалить товар
+        </button>
+      </article>
+    `;
+  }).join('');
 }
+
+list?.addEventListener('click', async (event) => {
+  const deleteButton = event.target.closest('[data-delete-product]');
+  if (!deleteButton) {
+    return;
+  }
+
+  const productId = deleteButton.dataset.deleteProduct;
+  const product = products.find(
+    (item) => String(item.id) === productId
+  );
+
+  if (!product) {
+    return;
+  }
+
+  if (!window.confirm(`Удалить товар «${product.name}»?`)) {
+    return;
+  }
+
+  const message = document.querySelector('#products-message');
+  deleteButton.disabled = true;
+  deleteButton.textContent = 'Удаляем...';
+
+  try {
+    const response = await fetch(
+      'https://server-zebrabro.onrender.com/api/products',
+      {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ id: product.id })
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Сервер вернул ошибку ${response.status}.`);
+    }
+
+    const refreshed = await getProducts();
+    if (message) {
+      message.textContent = refreshed
+        ? `Товар «${product.name}» удалён.`
+        : `Товар «${product.name}» удалён, но список не удалось обновить.`;
+      message.dataset.state = refreshed ? 'success' : 'error';
+    }
+  } catch (error) {
+    console.error('Не удалось удалить товар:', error);
+
+    if (message) {
+      message.textContent =
+        `Не удалось удалить товар. ${error.message}`;
+      message.dataset.state = 'error';
+    }
+
+    deleteButton.disabled = false;
+    deleteButton.textContent = 'Удалить товар';
+  }
+});
     //добавление данных на сервер
 document.querySelector('#category-form').addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -180,6 +350,7 @@ document.querySelector('#product-form').addEventListener('submit', async (event)
         'Товар успешно добавлен!';
 
     form.reset();
+    await getProducts();
 
 } catch (error) {
 

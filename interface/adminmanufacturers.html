@@ -10,8 +10,8 @@
 
   <style>
     .admin-header {
-      padding: 56px 0 36px;
-      text-align: center;
+      padding: 48px 0 32px;
+      text-align: left;
     }
 
     .admin-header h1 {
@@ -21,19 +21,19 @@
 
     .admin-header p {
       max-width: 680px;
-      margin: 16px auto 0;
+      margin: 14px 0 0;
       color: var(--muted);
-      font-size: 18px;
+      font-size: 16px;
     }
 
     /* Форма */
 
     .admin-form {
-      margin-bottom: 56px;
-      padding: 30px;
+      margin-bottom: 24px;
+      padding: 28px;
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 18px;
+      border-radius: 16px;
       box-shadow: var(--shadow);
     }
 
@@ -127,99 +127,156 @@
     /* Список товаров */
 
     .products-section {
-      padding-bottom: 56px;
+      margin: 20px 0 56px;
+      padding: 28px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
     }
 
-    .products-section h2 {
+    .products-section-heading {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
       margin-bottom: 20px;
-      font-size: 30px;
     }
 
     .products-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
     }
 
-    .product-card {
-      padding: 20px;
-
+    .admin-product-card {
+      min-width: 0;
+      padding: 14px;
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 18px;
-
+      border-radius: 14px;
       box-shadow: var(--shadow);
-
-      transition: transform .2s, box-shadow .2s;
+      transition: transform .2s, box-shadow .2s, border-color .2s;
     }
 
-    .product-card:hover {
-      transform: translateY(-3px);
+    .admin-product-card:hover {
+      transform: translateY(-2px);
       box-shadow: var(--shadow-large);
+      border-color: var(--gold-light);
     }
 
-    .product-image {
-      height: 180px;
-      margin-bottom: 18px;
-
+    .admin-product-image {
+      height: 170px;
+      margin-bottom: 14px;
       overflow: hidden;
-
       background: #eee;
       border-radius: 12px;
     }
 
-    .product-image img {
+    .admin-product-image img {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
 
-    .product-name {
+    .admin-product-name {
       margin: 0;
       font-family: var(--serif);
-      font-size: 23px;
+      font-size: 20px;
+      line-height: 1.25;
     }
 
-    .product-category {
-      margin-top: 6px;
-
+    .admin-product-category {
+      display: inline-flex;
+      margin-top: 9px;
+      padding: 4px 9px;
       color: var(--gold-dark);
-
-      font-size: 12px;
+      background: var(--gold-soft);
+      border-radius: 999px;
+      font-size: 11px;
       font-weight: 700;
-
-      letter-spacing: .08em;
-      text-transform: uppercase;
+      letter-spacing: .04em;
     }
 
-    .product-description {
-      margin: 12px 0;
-
+    .admin-product-description {
+      min-height: 42px;
+      margin: 10px 0;
       color: var(--muted);
-      font-size: 14px;
+      font-size: 13px;
       line-height: 1.5;
     }
 
-    .product-bottom {
+    .admin-product-bottom {
       display: flex;
       align-items: center;
       justify-content: space-between;
-
-      margin-top: 16px;
-      padding-top: 14px;
-
+      gap: 10px;
+      margin-top: 12px;
+      padding-top: 12px;
       border-top: 1px solid var(--border);
     }
 
-    .product-price {
+    .admin-product-price {
       color: var(--gold-dark);
-      font-size: 20px;
-      font-weight: 700;
+      font-size: 18px;
+      font-weight: 800;
     }
 
-    .product-stock {
+    .admin-product-stock {
       color: var(--muted);
-      font-size: 13px;
+      font-size: 12px;
+    }
+
+    .admin-product-delete {
+      width: 100%;
+      margin-top: 12px;
+      padding: 9px 12px;
+      color: #925342;
+      background: #fbf3ef;
+      border: 1px solid #efddd5;
+      border-radius: 9px;
+      font-weight: 700;
+      transition: background .2s, border-color .2s, color .2s;
+    }
+
+    .admin-product-delete:hover:not(:disabled) {
+      color: #783c2c;
+      background: #f5e5dd;
+      border-color: #e7c8ba;
+    }
+
+    .admin-product-delete:disabled {
+      cursor: wait;
+      opacity: .65;
+    }
+
+    .products-count,
+    .products-message {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .products-message {
+      min-height: 22px;
+      margin: 0 0 14px;
+    }
+
+    .products-message[data-state="error"] {
+      color: #a34332;
+    }
+
+    .products-message[data-state="success"] {
+      color: var(--gold-dark);
+    }
+
+    .products-empty {
+      grid-column: 1 / -1;
+      padding: 32px 20px;
+      color: var(--muted);
+      background: #f8f5ef;
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      text-align: center;
     }
 
     /* Адаптив */
@@ -240,7 +297,7 @@
       }
 
       .admin-form {
-        padding: 22px;
+        padding: 20px;
       }
 
       .form-grid {
@@ -258,6 +315,15 @@
 
       .products-grid {
         grid-template-columns: 1fr;
+      }
+
+      .products-section {
+        padding: 20px;
+      }
+
+      .products-section-heading {
+        align-items: flex-start;
+        flex-direction: column;
       }
     }
   </style>
@@ -284,7 +350,7 @@
       <nav class="page-links" aria-label="Основная навигация">
         <a href="./index.html">Главная</a>
         <a href="./manufacturers.html">Производители</a>
-        <a class="active" href="./admin.html">Админ-панель</a>
+        <a class="active" href="./adminmanufacturers.html">Админ-панель</a>
       </nav>
 
     </div>
@@ -693,20 +759,21 @@
 </section>
 </main>
 
- <!-- Список товаров -->
+ <div class="container">
+   <section class="products-section" aria-labelledby="products-heading">
+     <div class="products-section-heading">
+       <div>
+         <div class="eyebrow">Каталог магазина</div>
+         <h2 id="products-heading">Товары</h2>
+       </div>
+       <span class="products-count" id="products-count">Загрузка...</span>
+     </div>
 
-    <section class="products-section">
+     <p class="products-message" id="products-message" role="status" aria-live="polite"></p>
 
-      <h2>
-        Товары
-      </h2>
-
-      <div
-        class="products-grid"
-        id="products-list"
-      ></div>
-
-    </section>
+     <div class="products-grid" id="products-list"></div>
+   </section>
+ </div>
     
 <footer class="site-footer">
 
