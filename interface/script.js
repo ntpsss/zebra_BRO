@@ -1,22 +1,3 @@
-const API_URL = 'https://server-zebrabro.onrender.com/';
-
-async function getProducts() {
-    try {
-        const response = await fetch(`${API_URL}/api/products`);
-
-        if (!response.ok) {
-            throw new Error(`Ошибка HTTP: ${response.status}`);
-        }
-
-        const products = await response.json();
-
-        console.log('PRODUCTS:', products);
-    } catch (error) {
-        console.error('ОШИБКА:', error);
-    }
-}
-
-getProducts();
 const $ = (selector) => {
   return document.querySelector(selector);
 };
@@ -471,9 +452,6 @@ if (carousel) {
 /* =========================================================
    ИЗБРАННОЕ И КОРЗИНА
    ========================================================= */
-/* =========================================================
-   ИЗБРАННОЕ И КОРЗИНА
-   ========================================================= */
 
 const savedCart = JSON.parse(
   localStorage.getItem('zebraCart') || '{}'
@@ -767,8 +745,6 @@ $('#desktop-search')?.addEventListener(
     }
   }
 );
-
-
 
 /* =========================================================
    ПОДПИСКА
