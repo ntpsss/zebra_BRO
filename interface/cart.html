@@ -40,7 +40,6 @@
       border: 1px solid var(--border);
       border-radius: 16px;
       box-shadow: var(--shadow);
-      transition: opacity .25s, background .25s;
     }
 
     .cart-item-image {
@@ -78,70 +77,72 @@
     .cart-quantity {
       display: flex;
       align-items: center;
+      gap: 4px;
       overflow: hidden;
+      padding: 4px;
+      background: var(--gold-soft);
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: 12px;
     }
 
     .cart-quantity button {
       width: 34px;
       height: 34px;
-      color: var(--ink);
-      background: var(--gold-soft);
-      border: 0;
+      display: grid;
+      place-items: center;
+      color: var(--gold-dark);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 9px;
       font-size: 20px;
-      cursor: pointer;
+      font-weight: 600;
+      transition:
+        color .2s,
+        background .2s,
+        border-color .2s,
+        transform .2s;
     }
 
     .cart-quantity button:hover {
+      color: var(--ink);
       background: var(--gold-light);
+      border-color: var(--gold);
+      transform: translateY(-1px);
     }
 
     .cart-quantity span {
       min-width: 32px;
+      color: var(--ink);
       text-align: center;
       font-weight: 700;
     }
 
-    .cart-actions {
+    .cart-undo {
       display: flex;
       align-items: center;
-      gap: 12px;
-      margin-top: 8px;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 16px;
+      padding: 14px 18px;
+      color: var(--ink);
+      background: var(--gold-soft);
+      border: 1px solid var(--border);
+      border-radius: 12px;
     }
 
-    .cart-remove,
-    .cart-restore {
-      padding: 0;
-      color: var(--muted);
-      background: transparent;
-      border: 0;
-      font-size: 12px;
-      text-decoration: underline;
-      cursor: pointer;
-    }
-
-    .cart-remove:hover {
-      color: #b64a31;
-    }
-
-    .cart-restore {
+    .cart-undo button {
+      padding: 7px 12px;
       color: var(--gold-dark);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 9px;
       font-weight: 700;
     }
 
-    .cart-restore:hover {
-      color: var(--gold);
-    }
-
-    .cart-item-removed {
-      opacity: .55;
-      background: #f3f0eb;
-    }
-
-    .cart-item-removed .cart-quantity {
-      pointer-events: none;
-      opacity: .4;
+    .cart-undo button:hover {
+      color: var(--ink);
+      background: var(--gold-light);
+      border-color: var(--gold);
     }
 
     .cart-summary {
@@ -210,11 +211,6 @@
     .empty-cart a {
       display: inline-flex;
       margin-top: 18px;
-      padding: 12px 20px;
-      color: #fff;
-      background: var(--gold);
-      border-radius: 10px;
-      font-weight: 700;
     }
 
     @media (max-width: 800px) {
@@ -338,7 +334,8 @@
       localStorage.getItem('zebraCart') || '{}'
     );
 
-    const removalTimers = new Map();
+    const removedProducts = new Map();
+    const removalTimeouts = new Map();
 
     const saveCart = () => {
       localStorage.setItem(
@@ -371,12 +368,24 @@
       };
     };
 
+    const renderUndoNotice = () => {
+      return Array.from(removedProducts.entries())
+        .map(([index]) => `
+          <div class="cart-undo" role="status" aria-live="polite">
+            <span>${products[index][0]} удалён из корзины.</span>
+            <button data-restore="${index}" type="button">Вернуть</button>
+          </div>
+        `)
+        .join('');
+    };
+
     const render = () => {
       const entries = Object.entries(cart)
         .filter(([, quantity]) => quantity > 0);
 
       if (entries.length === 0) {
         content.innerHTML = `
+          ${renderUndoNotice()}
           <div class="empty-cart">
             <h2>Корзина пока пуста</h2>
 
@@ -385,7 +394,7 @@
               и они появятся здесь.
             </p>
 
-            <a href="./index.html#hits">
+            <a class="catalog-button" href="./index.html#hits">
               Перейти к товарам
             </a>
           </div>
@@ -421,25 +430,6 @@
 
                 <div class="cart-item-price">
                   ${formatPrice(product[3])}
-                </div>
-
-                <div class="cart-actions">
-                  <button
-                    class="cart-remove"
-                    data-remove="${index}"
-                    type="button"
-                  >
-                    Удалить
-                  </button>
-
-                  <button
-                    class="cart-restore"
-                    data-restore="${index}"
-                    type="button"
-                    hidden
-                  >
-                    Вернуть
-                  </button>
                 </div>
               </div>
 
@@ -502,6 +492,7 @@
             </button>
           </aside>
         </div>
+        ${renderUndoNotice()}
       `;
     };
 
@@ -511,9 +502,6 @@
 
       const minusButton =
         event.target.closest('[data-minus]');
-
-      const removeButton =
-        event.target.closest('[data-remove]');
 
       const restoreButton =
         event.target.closest('[data-restore]');
@@ -533,12 +521,22 @@
       }
 
       if (minusButton) {
-        const index = minusButton.dataset.minus;
+        const index = Number(minusButton.dataset.minus);
+        const previousQuantity = cart[index] || 0;
 
         cart[index] = (cart[index] || 0) - 1;
 
         if (cart[index] <= 0) {
           delete cart[index];
+          removedProducts.set(index, previousQuantity);
+
+          window.clearTimeout(removalTimeouts.get(index));
+          const timeout = window.setTimeout(() => {
+            removedProducts.delete(index);
+            removalTimeouts.delete(index);
+            render();
+          }, 5000);
+          removalTimeouts.set(index, timeout);
         }
 
         saveCart();
@@ -547,72 +545,21 @@
         return;
       }
 
-      if (removeButton) {
-        const index = removeButton.dataset.remove;
-
-        const item = document.querySelector(
-          `[data-cart-item="${index}"]`
-        );
-
-        if (!item) {
-          return;
-        }
-
-        item.classList.add(
-          'cart-item-removed'
-        );
-
-        removeButton.hidden = true;
-
-        const restoreButtonInItem =
-          item.querySelector('[data-restore]');
-
-        if (restoreButtonInItem) {
-          restoreButtonInItem.hidden = false;
-        }
-
-        const timer = window.setTimeout(() => {
-          delete cart[index];
-          removalTimers.delete(index);
-
-          saveCart();
-          render();
-        }, 5000);
-
-        removalTimers.set(index, timer);
-
-        return;
-      }
-
       if (restoreButton) {
-        const index = restoreButton.dataset.restore;
-        const timer = removalTimers.get(index);
+        const index = Number(restoreButton.dataset.restore);
+        const quantity = removedProducts.get(index);
 
-        if (timer) {
-          window.clearTimeout(timer);
-          removalTimers.delete(index);
-        }
-
-        const item = document.querySelector(
-          `[data-cart-item="${index}"]`
-        );
-
-        if (!item) {
+        if (quantity === undefined) {
           return;
         }
 
-        item.classList.remove(
-          'cart-item-removed'
-        );
+        window.clearTimeout(removalTimeouts.get(index));
+        removalTimeouts.delete(index);
+        cart[index] = quantity;
+        removedProducts.delete(index);
 
-        restoreButton.hidden = true;
-
-        const removeButtonInItem =
-          item.querySelector('[data-remove]');
-
-        if (removeButtonInItem) {
-          removeButtonInItem.hidden = false;
-        }
+        saveCart();
+        render();
 
         return;
       }

@@ -81,9 +81,10 @@
       id="catalog-button"
       type="button"
       aria-expanded="false"
+      aria-controls="catalog-panel"
     >
-      <svg>
-        <use href="#grid"></use>
+      <svg aria-hidden="true">
+        <use href="#grid" data-catalog-icon></use>
       </svg>
 
       Каталог
@@ -106,7 +107,7 @@
   </form>
 
   <nav class="account-nav desktop-account">
-    <a class="account-link" href="#">
+    <a class="account-link" href="./favorites.html">
       <svg>
         <use href="#heart"></use>
       </svg>
@@ -151,21 +152,13 @@
 </a>
   </nav>
 </div>
-
-        <form class="search-form mobile-search" id="mobile-search">
-          <svg><use href="#search"></use></svg>
-          <label class="sr-only" for="mobile-query">Поиск</label>
-          <input id="mobile-query" type="search" placeholder="Поиск мебели и декора">
-          <button class="clear-button" type="button" data-clear="mobile-query">
-            <svg><use href="#x"></use></svg>
-          </button>
-        </form>
-      </div>
-    </header>
+</div>
+</header>
 <section
   class="catalog-fullscreen hidden"
   id="catalog-panel"
   aria-label="Полный каталог мебели"
+  aria-hidden="true"
 >
   <div class="catalog-fullscreen-inner">
     <div class="catalog-fullscreen-header">
@@ -260,6 +253,15 @@
           data-category="living"
         >
           <span>Мебель для гостиной</span>
+          <span class="category-arrow">›</span>
+        </button>
+
+        <button
+          class="catalog-category"
+          type="button"
+          data-category="living-rooms"
+        >
+          <span>Гостиные</span>
           <span class="category-arrow">›</span>
         </button>
 
@@ -408,7 +410,7 @@
           id="catalog-products"
         >
           <a
-            class="catalog-card"
+            class="catalog-card catalog-card-featured"
             href="#hits"
             data-category-card="kitchen"
           >
@@ -527,29 +529,32 @@
             <span>Освещение и декор</span>
           </a>
         </div>
+        <p class="catalog-empty hidden" id="catalog-empty">
+          В этом разделе пока нет доступных подборок.
+        </p>
       </section>
     </div>
   </div>
 </section>
 
     <nav class="mobile-nav">
-      <a href="#top">
-        <svg><use href="#home"></use></svg>
-        <span>Главная</span>
-      </a>
-      <a href="#cats">
-        <svg><use href="#grid"></use></svg>
-        <span>Каталог</span>
-      </a>
-      <a href="#hits">
-        <svg><use href="#heart"></use></svg>
-        <span>Избранное</span>
-      </a>
-      <a href="#footer">
-        <svg><use href="#user"></use></svg>
-        <span>Профиль</span>
-      </a>
-    </nav>
+  <a href="#top">
+    <svg><use href="#home"></use></svg>
+    <span>Главная</span>
+  </a>
+  <button type="button" class="mobile-nav-btn" id="mobile-catalog-button" aria-expanded="false" aria-controls="catalog-panel">
+    <svg><use href="#grid"></use></svg>
+    <span>Каталог</span>
+  </button>
+  <a href="./favorites.html">
+    <svg><use href="#heart"></use></svg>
+    <span>Избранное</span>
+  </a>
+  <a href="#footer">
+    <svg><use href="#user"></use></svg>
+    <span>Профиль</span>
+  </a>
+</nav>
 
     <main id="top">
       <div class="container">

@@ -17,71 +17,75 @@ const imagePath = (fileName) => {
 const fallbackImage = imagePath('fallback.png');
 
 /* =========================================================
-   ПОЛНОЭКРАННЫЙ КАТАЛОГ
+   ПЕРЕКЛЮЧЕНИЕ ПАНЕЛИ КАТАЛОГА
    ========================================================= */
 
 const catalogButton = $('#catalog-button');
+const mobileCatalogButton = $('#mobile-catalog-button');
 const catalogPanel = $('#catalog-panel');
 const catalogClose = $('#catalog-close');
+const catalogIcon = $('[data-catalog-icon]');
 
-const openCatalog = () => {
-  if (!catalogPanel) {
-    return;
+const setCatalogOpen = (isOpen) => {
+  if (!catalogPanel) return;
+
+  catalogPanel.classList.toggle('hidden', !isOpen);
+  catalogPanel.setAttribute('aria-hidden', String(!isOpen));
+  document.body.classList.toggle('catalog-is-open', isOpen);
+
+  [catalogButton, mobileCatalogButton].forEach((button) => {
+    if (button) {
+      button.setAttribute('aria-expanded', String(isOpen));
+    }
+  });
+
+  if (catalogIcon) {
+    catalogIcon.setAttribute('href', isOpen ? '#x' : '#grid');
   }
 
-  catalogPanel.classList.remove('hidden');
-  document.body.classList.add('catalog-is-open');
-
   if (catalogButton) {
-    catalogButton.setAttribute('aria-expanded', 'true');
+    catalogButton.classList.toggle('is-open', isOpen);
   }
 };
 
-const closeCatalog = () => {
-  if (!catalogPanel) {
-    return;
-  }
-
-  catalogPanel.classList.add('hidden');
-  document.body.classList.remove('catalog-is-open');
-
-  if (catalogButton) {
-    catalogButton.setAttribute('aria-expanded', 'false');
-  }
+const toggleCatalog = (event) => {
+  event.stopPropagation();
+  setCatalogOpen(catalogPanel.classList.contains('hidden'));
 };
 
 if (catalogButton && catalogPanel) {
-  catalogButton.addEventListener('click', (event) => {
-    event.stopPropagation();
+  catalogButton.addEventListener('click', toggleCatalog);
+}
 
-    const isCatalogClosed =
-      catalogPanel.classList.contains('hidden');
+if (mobileCatalogButton && catalogPanel) {
+  mobileCatalogButton.addEventListener('click', toggleCatalog);
+}
 
-    if (isCatalogClosed) {
-      openCatalog();
-    } else {
-      closeCatalog();
+if (catalogClose) {
+  catalogClose.addEventListener('click', () => setCatalogOpen(false));
+}
+
+if (catalogPanel) {
+  catalogPanel.addEventListener('click', (event) => {
+    if (event.target.closest('a')) {
+      setCatalogOpen(false);
     }
   });
 }
 
-if (catalogClose) {
-  catalogClose.addEventListener('click', closeCatalog);
-}
-
 document.addEventListener('click', (event) => {
-  const clickedInsideCatalog = event.target.closest(
-    '#catalog-panel, #catalog-button'
-  );
-
-  if (!clickedInsideCatalog) {
-    closeCatalog();
+  if (
+    catalogPanel &&
+    !catalogPanel.classList.contains('hidden') &&
+    !event.target.closest('#catalog-panel, #catalog-button, #mobile-catalog-button')
+  ) {
+    setCatalogOpen(false);
   }
 });
 
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') {
-    closeCatalog();
+    setCatalogOpen(false);
   }
 });
 
@@ -92,6 +96,7 @@ document.addEventListener('keydown', (event) => {
 const categoryButtons = $$('.catalog-category');
 const categoryCards = $$('[data-category-card]');
 const categoryTitle = $('#catalog-category-title');
+const emptyCatalogMessage = $('#catalog-empty');
 
 const categoryTitles = {
   all: 'Выбирайте мебель для дома',
@@ -102,8 +107,11 @@ const categoryTitles = {
   mattresses: 'Матрасы',
   wardrobe: 'Шкафы-купе',
   living: 'Мебель для гостиной',
+  'living-rooms': 'Гостиные',
+  sofa: 'Диваны и кресла',
   hallway: 'Прихожие',
   office: 'Компьютерные и письменные столы',
+  decor: 'Освещение и декор',
   shoe: 'Обувницы',
   chests: 'Тумбы и комоды',
   wardrobes: 'Шкафы',
@@ -133,6 +141,8 @@ categoryButtons.forEach((button) => {
         categoryTitles.all;
     }
 
+    let visibleCardCount = 0;
+
     categoryCards.forEach((card) => {
       const cardCategory = card.dataset.categoryCard;
 
@@ -141,7 +151,15 @@ categoryButtons.forEach((button) => {
         cardCategory === selectedCategory;
 
       card.hidden = !shouldShow;
+      if (shouldShow) visibleCardCount += 1;
     });
+
+    if (emptyCatalogMessage) {
+      emptyCatalogMessage.classList.toggle(
+        'hidden',
+        visibleCardCount > 0
+      );
+    }
   });
 });
 
@@ -267,6 +285,44 @@ const products = [
   ]
 ];
 
+const favorites = new Set(
+  JSON.parse(localStorage.getItem('zebraFavorites') || '[]')
+    .map(Number)
+    .filter((index) => Number.isInteger(index) && products[index])
+);
+
+const favoritesGrid = $('#favorites-grid');
+
+const saveFavorites = () => {
+  localStorage.setItem(
+    'zebraFavorites',
+    JSON.stringify(Array.from(favorites))
+  );
+};
+
+const updateFavoritesCount = () => {
+  const count = favorites.size;
+  const badge = $('#favBadge');
+  const pageCount = $('#favorite-count');
+
+  if (badge) {
+    badge.textContent = count;
+  }
+
+  if (pageCount) {
+    const countForm = new Intl.PluralRules('ru').select(count);
+    const unit = {
+      one: 'товар',
+      few: 'товара',
+      many: 'товаров',
+      other: 'товара'
+    }[countForm];
+
+    pageCount.textContent =
+      `${count} ${unit}`;
+  }
+};
+
 const renderStars = (rating) => {
   return [1, 2, 3, 4, 5]
     .map((star) => {
@@ -284,117 +340,112 @@ const renderStars = (rating) => {
     .join('');
 };
 
+const renderProductCard = (
+  [name, fileName, oldPrice, newPrice, rating, reviews],
+  index
+) => {
+  const discount = Math.round(
+    (1 - newPrice / oldPrice) * 100
+  );
+  const isFavorite = favorites.has(index);
+
+  return `
+    <article class="product-card">
+      <div class="product-image">
+        <img
+          src="${imagePath(fileName)}"
+          alt="${name}"
+          onerror="this.onerror=null; this.src='${fallbackImage}'"
+        >
+
+        <span class="discount">-${discount}%</span>
+
+        <button
+          class="favorite-button${isFavorite ? ' is-favorite' : ''}"
+          data-fav="${index}"
+          type="button"
+          aria-label="${isFavorite ? 'Убрать из избранного' : 'Добавить в избранное'}"
+          aria-pressed="${isFavorite}"
+        >
+          <svg aria-hidden="true">
+            <use href="#heart"></use>
+          </svg>
+        </button>
+      </div>
+
+      <div class="product-body">
+        <h3 class="product-title">${name}</h3>
+
+        <div class="rating">
+          ${renderStars(rating)}
+          <span class="rating-count">${rating} (${reviews})</span>
+        </div>
+
+        <div class="price-row">
+          <span class="price">${formatPrice(newPrice)}</span>
+          <span class="old-price">${formatPrice(oldPrice)}</span>
+        </div>
+
+        <div
+          class="quantity-control"
+          data-quantity-control="${index}"
+          hidden
+        >
+          <button
+            class="quantity-button"
+            data-quantity-minus="${index}"
+            type="button"
+            aria-label="Уменьшить количество"
+          >−</button>
+
+          <span
+            class="quantity-value"
+            data-quantity-value="${index}"
+          >0</span>
+
+          <button
+            class="quantity-button"
+            data-quantity-plus="${index}"
+            type="button"
+            aria-label="Увеличить количество"
+          >+</button>
+        </div>
+
+        <button
+          class="buy-button"
+          data-buy="${index}"
+          type="button"
+        >В корзину</button>
+      </div>
+    </article>
+  `;
+};
+
+const renderFavoritesPage = () => {
+  if (!favoritesGrid) {
+    return;
+  }
+
+  const favoriteProducts = Array.from(favorites)
+    .filter((index) => products[index])
+    .map((index) => renderProductCard(products[index], index));
+
+  favoritesGrid.innerHTML = favoriteProducts.join('');
+
+  const emptyMessage = $('#favorites-empty');
+  if (emptyMessage) {
+    emptyMessage.hidden = favoriteProducts.length > 0;
+  }
+
+  updateFavoritesCount();
+  updateAllProductQuantities();
+};
+
 const carousel = $('#carousel');
 
 if (carousel) {
   carousel.innerHTML = products
-    .map(
-      (
-        [
-          name,
-          fileName,
-          oldPrice,
-          newPrice,
-          rating,
-          reviews
-        ],
-        index
-      ) => {
-        const discount = Math.round(
-          (1 - newPrice / oldPrice) * 100
-        );
-
-        return `
-          <article class="product-card">
-            <div class="product-image">
-              <img
-                src="${imagePath(fileName)}"
-                alt="${name}"
-                onerror="this.onerror=null; this.src='${fallbackImage}'"
-              >
-
-              <span class="discount">
-                -${discount}%
-              </span>
-
-              <button
-                class="favorite-button"
-                data-fav="${index}"
-                type="button"
-                aria-label="Добавить в избранное"
-              >
-                <svg>
-                  <use href="#heart"></use>
-                </svg>
-              </button>
-            </div>
-
-            <div class="product-body">
-              <h3 class="product-title">
-                ${name}
-              </h3>
-
-              <div class="rating">
-                ${renderStars(rating)}
-
-                <span class="rating-count">
-                  ${rating} (${reviews})
-                </span>
-              </div>
-
-              <div class="price-row">
-                <span class="price">
-                  ${formatPrice(newPrice)}
-                </span>
-
-                <span class="old-price">
-                  ${formatPrice(oldPrice)}
-                </span>
-              </div>
-
-             <div
-  class="quantity-control"
-  data-quantity-control="${index}"
-  hidden
->
-  <button
-    class="quantity-button"
-    data-quantity-minus="${index}"
-    type="button"
-    aria-label="Уменьшить количество"
-  >
-    −
-  </button>
-
-  <span
-    class="quantity-value"
-    data-quantity-value="${index}"
-  >
-    0
-  </span>
-
-  <button
-    class="quantity-button"
-    data-quantity-plus="${index}"
-    type="button"
-    aria-label="Увеличить количество"
-  >
-    +
-  </button>
-</div>
-
-<button
-  class="buy-button"
-  data-buy="${index}"
-  type="button"
->
-  В корзину
-</button>
-            </div>
-          </article>
-        `;
-      }
-    )
+    .map((product, index) => renderProductCard(product, index))
     .join('');
 }
 
@@ -404,8 +455,6 @@ if (carousel) {
 /* =========================================================
    ИЗБРАННОЕ И КОРЗИНА
    ========================================================= */
-
-const favorites = new Set();
 
 const savedCart = JSON.parse(
   localStorage.getItem('zebraCart') || '{}'
@@ -548,9 +597,14 @@ const removeProductFromCart = (productIndex) => {
 
 updateAllProductQuantities();
 updateCartHeader();
+updateFavoritesCount();
+renderFavoritesPage();
 
-if (carousel) {
-  carousel.addEventListener('click', (event) => {
+const productContainers = [carousel, favoritesGrid]
+  .filter(Boolean);
+
+productContainers.forEach((productContainer) => {
+  productContainer.addEventListener('click', (event) => {
     const favoriteButton =
       event.target.closest('[data-fav]');
 
@@ -574,17 +628,25 @@ if (carousel) {
         favorites.add(productIndex);
       }
 
-      favoriteButton.classList.toggle(
-        'is-favorite',
-        favorites.has(productIndex)
-      );
+      saveFavorites();
+      updateFavoritesCount();
 
-      const favoriteBadge = $('#favBadge');
+      $$('[data-fav]').forEach((button) => {
+        const isFavorite = favorites.has(
+          Number(button.dataset.fav)
+        );
 
-      if (favoriteBadge) {
-        favoriteBadge.textContent =
-          favorites.size;
-      }
+        button.classList.toggle('is-favorite', isFavorite);
+        button.setAttribute('aria-pressed', String(isFavorite));
+        button.setAttribute(
+          'aria-label',
+          isFavorite
+            ? 'Убрать из избранного'
+            : 'Добавить в избранное'
+        );
+      });
+
+      renderFavoritesPage();
 
       return;
     }
@@ -615,7 +677,7 @@ if (carousel) {
       removeProductFromCart(productIndex);
     }
   });
-}
+});
 /* =========================================================
    ПРОКРУТКА КАРУСЕЛИ
    ========================================================= */
@@ -645,10 +707,7 @@ if (carousel && nextButton) {
    ПОИСК ПО ТОВАРАМ
    ========================================================= */
 
-const searchInputs = [
-  $('#desktop-query'),
-  $('#mobile-query')
-].filter(Boolean);
+const desktopSearchInput = $('#desktop-query');
 
 const filterProducts = (query) => {
   const normalizedQuery = query
@@ -671,17 +730,11 @@ const filterProducts = (query) => {
   });
 };
 
-searchInputs.forEach((input) => {
-  input.addEventListener('input', () => {
-    filterProducts(input.value);
-
-    searchInputs.forEach((otherInput) => {
-      if (otherInput !== input) {
-        otherInput.value = input.value;
-      }
-    });
+if (desktopSearchInput) {
+  desktopSearchInput.addEventListener('input', () => {
+    filterProducts(desktopSearchInput.value);
   });
-});
+}
 
 $('#desktop-search')?.addEventListener(
   'submit',
@@ -696,18 +749,7 @@ $('#desktop-search')?.addEventListener(
   }
 );
 
-$('#mobile-search')?.addEventListener(
-  'submit',
-  (event) => {
-    event.preventDefault();
 
-    const input = $('#mobile-query');
-
-    if (input) {
-      filterProducts(input.value);
-    }
-  }
-);
 
 /* =========================================================
    ПОДПИСКА

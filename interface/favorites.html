@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Избранное — Золотая зебра</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <svg hidden aria-hidden="true">
+    <symbol id="heart" viewBox="0 0 24 24">
+      <path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7Z" />
+    </symbol>
+    <symbol id="star" viewBox="0 0 24 24">
+      <path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z" />
+    </symbol>
+    <symbol id="bag" viewBox="0 0 24 24">
+      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18" />
+      <path d="M16 10a4 4 0 0 1-8 0" />
+    </symbol>
+  </svg>
+
+  <header class="site-header favorites-site-header">
+    <div class="container">
+      <div class="header-main favorites-header">
+        <div class="favorites-header-left">
+          <a class="brand" href="./index.html" aria-label="Золотая зебра — главная">
+            <img
+              class="brand-logo-full"
+              src="../images/logo.png"
+              alt="Золотая зебра"
+            >
+          </a>
+          <a class="catalog-button" href="./index.html#hits">
+            Продолжить покупки
+          </a>
+        </div>
+        <a class="catalog-button favorites-cart-button" href="./cart.html">
+          <svg aria-hidden="true">
+            <use href="#bag"></use>
+          </svg>
+          Корзина
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="favorites-page">
+    <div class="container">
+      <div class="favorites-heading">
+        <div>
+          <span class="eyebrow">Ваша коллекция</span>
+          <h1>Избранное</h1>
+        </div>
+        <span class="favorites-count" id="favorite-count">0 товаров</span>
+      </div>
+
+      <div class="favorites-grid" id="favorites-grid"></div>
+
+      <section class="favorites-empty" id="favorites-empty" hidden>
+        <div class="favorites-empty-icon" aria-hidden="true">♡</div>
+        <h2>Пока здесь пусто</h2>
+        <p>Добавляйте понравившиеся товары, нажимая на сердечко.</p>
+        <a class="catalog-button" href="./index.html#hits">
+          Перейти к товарам
+        </a>
+      </section>
+    </div>
+  </main>
+
+  <script src="./script.js"></script>
+</body>
+</html>
