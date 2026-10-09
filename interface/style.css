@@ -38,8 +38,10 @@ html {
 
 body {
   min-width: 320px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   margin: 0;
-  padding-bottom: 64px;
   color: var(--ink);
   background: var(--page);
   font-family: var(--sans);
@@ -114,6 +116,17 @@ svg {
   align-items: center;
   gap: 12px;
   flex-shrink: 0;
+}
+
+.site-header .page-links {
+  order: 2;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-left: auto;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 
@@ -318,6 +331,7 @@ svg {
    ========================================================= */
 
 main {
+  flex: 1;
   padding: 24px 0 0;
 }
 
@@ -1483,6 +1497,10 @@ h2 {
 
 /* Планшет */
 @media (max-width: 1023px) {
+  .mobile-nav + main {
+    padding-bottom: 64px;
+  }
+
   .header-main {
     gap: 5px;
   }
@@ -1511,9 +1529,14 @@ h2 {
     gap: 3px;
   }
 
-  .brand-logo-full {
-    width: 120px;
-    height: 42px;
+  .site-header .brand-logo-full {
+    width: 118px !important;
+    max-height: 42px;
+  }
+
+  .site-header .page-links {
+    gap: 10px;
+    font-size: 12px;
   }
 }
 
@@ -1843,10 +1866,10 @@ body.auth-is-open {
     min-height: 0 !important;
     display: grid !important;
     grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-rows: 58px 44px;
-    gap: 8px 12px;
+    grid-template-rows: 58px auto;
+    gap: 4px 12px;
     align-items: center;
-    padding: 0 12px 10px !important;
+    padding: 0 16px 10px !important;
   }
 
   /* логотип */
@@ -1855,18 +1878,30 @@ body.auth-is-open {
     grid-row: 1;
     width: max-content;
     max-width: 100%;
-    height: 48px;
+    height: 54px;
     display: flex !important;
     align-items: center;
-    overflow: hidden;
   }
 
   .brand-logo-full {
     display: block;
-    width: 105px !important;
+    width: 150px !important;
     height: auto !important;
-    max-height: 44px;
+    max-height: 52px;
     object-fit: contain;
+  }
+
+  .site-header .page-links {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: center;
+    gap: 20px;
+    width: 100%;
+    min-height: 40px;
+    margin: 0;
+    font-size: 14px;
+    flex-wrap: wrap;
+    white-space: normal;
   }
 
   /* корзина */
@@ -1985,6 +2020,16 @@ body.auth-is-open {
 }
 
 @media (max-width: 650px) {
+  .site-header .brand-logo-full {
+    width: 132px !important;
+    max-height: 46px;
+  }
+
+  .site-header .page-links {
+    gap: 16px;
+    font-size: 13px;
+  }
+
   .favorites-header .brand-logo-full {
     width: 76px !important;
   }
