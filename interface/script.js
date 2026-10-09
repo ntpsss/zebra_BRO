@@ -811,9 +811,69 @@ const openLoginButton = $('#open-login');
 
 const loginForm = $('#login-form');
 const registerForm = $('#register-form');
+const registerPasswordInput = $('#register-password');
+const registerPasswordConfirmInput = $('#register-password-confirm');
 
 const vkLoginButton = $('#vk-login');
 const yandexLoginButton = $('#yandex-login');
+
+const openContactButton = $('#open-contact');
+const contactOverlay = $('#contact-overlay');
+const contactCloseButton = $('#contact-close');
+const contactForm = $('#contact-form');
+const contactNameInput = $('#contact-name');
+const contactSubmitNote = $('#contact-submit-note');
+
+const openContactModal = () => {
+  if (!contactOverlay) {
+    return;
+  }
+
+  contactOverlay.classList.remove('hidden');
+  contactOverlay.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('contact-is-open');
+  contactNameInput?.focus();
+};
+
+const closeContactModal = () => {
+  if (!contactOverlay) {
+    return;
+  }
+
+  contactOverlay.classList.add('hidden');
+  contactOverlay.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('contact-is-open');
+  openContactButton?.focus();
+};
+
+if (openContactButton) {
+  openContactButton.addEventListener('click', (event) => {
+    event.preventDefault();
+    openContactModal();
+  });
+}
+
+if (contactCloseButton) {
+  contactCloseButton.addEventListener('click', closeContactModal);
+}
+
+if (contactOverlay) {
+  contactOverlay.addEventListener('click', (event) => {
+    if (event.target === contactOverlay) {
+      closeContactModal();
+    }
+  });
+}
+
+if (contactForm && contactSubmitNote) {
+  contactForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    contactSubmitNote.textContent =
+      'Обращение не отправлено: онлайн-отправка пока не подключена. ' +
+      'Позвоните нам по номеру +7 (473) 207-20-78.';
+    contactSubmitNote.focus();
+  });
+}
 
 const openAuthModal = () => {
   if (!authOverlay) {
@@ -899,6 +959,7 @@ if (openLoginButton) {
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') {
     closeAuthModal();
+    closeContactModal();
   }
 });
 
@@ -927,17 +988,30 @@ if (loginForm) {
 }
 
 if (registerForm) {
+  const validatePasswordMatch = () => {
+    if (registerPasswordInput && registerPasswordConfirmInput) {
+      registerPasswordConfirmInput.setCustomValidity(
+        registerPasswordConfirmInput.value &&
+          registerPasswordInput.value !== registerPasswordConfirmInput.value
+          ? 'Пароли не совпадают'
+          : ''
+      );
+    }
+  };
+
+  registerPasswordInput?.addEventListener('input', validatePasswordMatch);
+  registerPasswordConfirmInput?.addEventListener('input', validatePasswordMatch);
+
   registerForm.addEventListener('submit', (event) => {
     event.preventDefault();
 
     const nameInput = $('#register-name');
     const phoneInput = $('#register-phone');
-    const emailInput = $('#register-email');
+    validatePasswordMatch();
 
     const user = {
       name: nameInput.value.trim(),
       phone: phoneInput.value.trim(),
-      email: emailInput.value.trim(),
       isLoggedIn: true
     };
 

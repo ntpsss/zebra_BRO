@@ -636,7 +636,7 @@
           <ul class="footer-list">
             <li><a href="#">Доставка и сборка</a></li>
             <li><a href="#">Рассрочка</a></li>
-            <li><a href="#">Написать письмо</a></li>
+            <li><a href="#contact-form" id="open-contact">Написать обращение</a></li>
           </ul>
         </section>
 
@@ -755,10 +755,18 @@
         >
         <input
           class="auth-phone-input"
-          id="register-email"
-          type="email"
-          placeholder="E-mail"
-          autocomplete="email"
+          id="register-password"
+          type="password"
+          placeholder="Пароль"
+          autocomplete="new-password"
+          required
+        >
+        <input
+          class="auth-phone-input"
+          id="register-password-confirm"
+          type="password"
+          placeholder="Подтвердите пароль"
+          autocomplete="new-password"
           required
         >
         <button class="auth-btn-primary" type="submit">
@@ -782,6 +790,72 @@
     </div>
 
   </div>
+</div>
+
+<div class="contact-overlay hidden" id="contact-overlay" aria-hidden="true">
+  <section
+    class="contact-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="contact-title"
+    aria-describedby="contact-description"
+  >
+    <div class="contact-modal-header">
+      <div>
+        <p class="contact-eyebrow">Мы на связи</p>
+        <h2 id="contact-title">Написать обращение</h2>
+      </div>
+      <button class="auth-close" id="contact-close" type="button" aria-label="Закрыть окно">
+        <svg viewBox="0 0 24 24">
+          <use href="#x"></use>
+        </svg>
+      </button>
+    </div>
+
+    <p class="contact-description" id="contact-description">
+      Расскажите, чем мы можем помочь, и оставьте контакты для обратной связи.
+    </p>
+
+    <form class="contact-form" id="contact-form">
+      <label class="contact-field">
+        <span>Ваше имя</span>
+        <input id="contact-name" name="name" type="text" autocomplete="name" placeholder="Как к вам обращаться" required>
+      </label>
+
+      <div class="contact-fields-row">
+        <label class="contact-field">
+          <span>Телефон</span>
+          <input name="phone" type="tel" autocomplete="tel" placeholder="+7 999 123-45-67" required>
+        </label>
+        <label class="contact-field">
+          <span>E-mail</span>
+          <input name="email" type="email" autocomplete="email" placeholder="name@example.com">
+        </label>
+      </div>
+
+      <label class="contact-field">
+        <span>Тема обращения</span>
+        <select name="subject" required>
+          <option value="" disabled selected>Выберите тему</option>
+          <option value="order">Заказ и оплата</option>
+          <option value="delivery">Доставка и сборка</option>
+          <option value="product">Вопрос о товаре</option>
+          <option value="other">Другое</option>
+        </select>
+      </label>
+
+      <label class="contact-field">
+        <span>Сообщение</span>
+        <textarea name="message" rows="4" placeholder="Опишите ваш вопрос" required></textarea>
+      </label>
+
+      <p class="contact-submit-note" id="contact-submit-note" role="status" tabindex="-1">
+        Чтобы получить ответ, позвоните нам:
+        <a href="tel:+74732072078">+7 (473) 207-20-78</a>.
+      </p>
+      <button class="contact-submit" type="submit">Отправить обращение</button>
+    </form>
+  </section>
 </div>
     <script type="module" src="./script.js"></script>
   </body>
