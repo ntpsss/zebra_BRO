@@ -588,6 +588,153 @@ h2 {
   padding: 11px;
 }
 
+.quantity-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 5px;
+  background: var(--gold-soft);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.quantity-control[hidden] {
+  display: none;
+}
+
+.quantity-button {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  color: var(--gold-dark);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  font-size: 20px;
+  font-weight: 600;
+  transition:
+    color 0.2s,
+    background 0.2s,
+    border-color 0.2s,
+    transform 0.2s;
+}
+
+.quantity-button:hover {
+  color: var(--ink);
+  background: var(--gold-light);
+  border-color: var(--gold);
+  transform: translateY(-1px);
+}
+
+.quantity-value {
+  min-width: 24px;
+  color: var(--ink);
+  font-weight: 700;
+  text-align: center;
+}
+
+.favorites-page {
+  padding: 42px 0 72px;
+}
+
+.favorites-site-header {
+  background: #fff;
+  border-bottom: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.favorites-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.favorites-cart-button {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.favorites-cart-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.favorites-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.favorites-heading .eyebrow {
+  display: block;
+}
+
+.favorites-heading h1 {
+  margin-top: 8px;
+  font-size: clamp(36px, 5vw, 52px);
+}
+
+.favorites-count {
+  padding-bottom: 8px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.favorites-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.favorites-grid .product-card {
+  min-width: 0;
+  flex: initial;
+}
+
+.favorites-empty {
+  padding: 56px 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.favorites-empty[hidden] {
+  display: none;
+}
+
+.favorites-empty-icon {
+  color: var(--gold);
+  font-size: 48px;
+  line-height: 1;
+}
+
+.favorites-empty h2 {
+  margin-top: 16px;
+  font-size: 30px;
+}
+
+.favorites-empty p {
+  margin: 8px 0 0;
+  color: var(--muted);
+}
+
+.favorites-empty .catalog-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20px;
+  padding: 0 20px;
+}
+
 /* =========================================================
    ПРЕИМУЩЕСТВА
    ========================================================= */
@@ -787,19 +934,19 @@ h2 {
 
 .catalog-button {
   color: var(--white);
-  background: #e30613;
+  background: linear-gradient(135deg, var(--gold), #d8b86b);
   border-radius: 999px;
 }
 
 .catalog-button:hover {
   color: var(--white);
-  background: #c9000b;
+  background: linear-gradient(135deg, var(--gold-dark), var(--gold));
 }
 
 .catalog-button.is-open,
 .catalog-button.is-open:hover {
   color: var(--white);
-  background: #e30613;
+  background: linear-gradient(135deg, var(--gold), #d8b86b);
   box-shadow: none;
   transform: none;
 }
@@ -1105,6 +1252,39 @@ h2 {
 
   .catalog-card-featured {
     grid-row: auto;
+  }
+}
+
+@media (max-width: 900px) {
+  .favorites-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 650px) {
+  .favorites-page {
+    padding-top: 28px;
+  }
+
+  .favorites-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .favorites-grid .product-body {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 420px) {
+  .favorites-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .favorites-count {
+    padding: 0;
   }
 }
 
@@ -1776,5 +1956,49 @@ body.auth-is-open {
 
   .catalog-fullscreen {
     top: 120px !important;
+  }
+}
+
+@media (max-width: 1023px) {
+  .favorites-header {
+    display: flex !important;
+    grid-template-rows: none;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .favorites-header .brand {
+    grid-column: auto;
+    grid-row: auto;
+    flex-shrink: 0;
+  }
+
+  .favorites-header .catalog-button {
+    height: 40px;
+    padding: 0 10px;
+    font-size: 13px;
+  }
+
+  .favorites-header-left {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 650px) {
+  .favorites-header .brand-logo-full {
+    width: 76px !important;
+  }
+
+  .favorites-header .catalog-button {
+    padding: 0 7px;
+    font-size: 11px;
+  }
+
+  .favorites-header-left {
+    gap: 5px;
+  }
+
+  .favorites-cart-button {
+    gap: 4px;
   }
 }

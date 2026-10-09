@@ -286,6 +286,44 @@ const products = [
   ]
 ];
 
+const favorites = new Set(
+  JSON.parse(localStorage.getItem('zebraFavorites') || '[]')
+    .map(Number)
+    .filter((index) => Number.isInteger(index) && products[index])
+);
+
+const favoritesGrid = $('#favorites-grid');
+
+const saveFavorites = () => {
+  localStorage.setItem(
+    'zebraFavorites',
+    JSON.stringify(Array.from(favorites))
+  );
+};
+
+const updateFavoritesCount = () => {
+  const count = favorites.size;
+  const badge = $('#favBadge');
+  const pageCount = $('#favorite-count');
+
+  if (badge) {
+    badge.textContent = count;
+  }
+
+  if (pageCount) {
+    const countForm = new Intl.PluralRules('ru').select(count);
+    const unit = {
+      one: 'товар',
+      few: 'товара',
+      many: 'товаров',
+      other: 'товара'
+    }[countForm];
+
+    pageCount.textContent =
+      `${count} ${unit}`;
+  }
+};
+
 const renderStars = (rating) => {
   return [1, 2, 3, 4, 5]
     .map((star) => {
@@ -303,117 +341,112 @@ const renderStars = (rating) => {
     .join('');
 };
 
+const renderProductCard = (
+  [name, fileName, oldPrice, newPrice, rating, reviews],
+  index
+) => {
+  const discount = Math.round(
+    (1 - newPrice / oldPrice) * 100
+  );
+  const isFavorite = favorites.has(index);
+
+  return `
+    <article class="product-card">
+      <div class="product-image">
+        <img
+          src="${imagePath(fileName)}"
+          alt="${name}"
+          onerror="this.onerror=null; this.src='${fallbackImage}'"
+        >
+
+        <span class="discount">-${discount}%</span>
+
+        <button
+          class="favorite-button${isFavorite ? ' is-favorite' : ''}"
+          data-fav="${index}"
+          type="button"
+          aria-label="${isFavorite ? 'Убрать из избранного' : 'Добавить в избранное'}"
+          aria-pressed="${isFavorite}"
+        >
+          <svg aria-hidden="true">
+            <use href="#heart"></use>
+          </svg>
+        </button>
+      </div>
+
+      <div class="product-body">
+        <h3 class="product-title">${name}</h3>
+
+        <div class="rating">
+          ${renderStars(rating)}
+          <span class="rating-count">${rating} (${reviews})</span>
+        </div>
+
+        <div class="price-row">
+          <span class="price">${formatPrice(newPrice)}</span>
+          <span class="old-price">${formatPrice(oldPrice)}</span>
+        </div>
+
+        <div
+          class="quantity-control"
+          data-quantity-control="${index}"
+          hidden
+        >
+          <button
+            class="quantity-button"
+            data-quantity-minus="${index}"
+            type="button"
+            aria-label="Уменьшить количество"
+          >−</button>
+
+          <span
+            class="quantity-value"
+            data-quantity-value="${index}"
+          >0</span>
+
+          <button
+            class="quantity-button"
+            data-quantity-plus="${index}"
+            type="button"
+            aria-label="Увеличить количество"
+          >+</button>
+        </div>
+
+        <button
+          class="buy-button"
+          data-buy="${index}"
+          type="button"
+        >В корзину</button>
+      </div>
+    </article>
+  `;
+};
+
+const renderFavoritesPage = () => {
+  if (!favoritesGrid) {
+    return;
+  }
+
+  const favoriteProducts = Array.from(favorites)
+    .filter((index) => products[index])
+    .map((index) => renderProductCard(products[index], index));
+
+  favoritesGrid.innerHTML = favoriteProducts.join('');
+
+  const emptyMessage = $('#favorites-empty');
+  if (emptyMessage) {
+    emptyMessage.hidden = favoriteProducts.length > 0;
+  }
+
+  updateFavoritesCount();
+  updateAllProductQuantities();
+};
+
 const carousel = $('#carousel');
 
 if (carousel) {
   carousel.innerHTML = products
-    .map(
-      (
-        [
-          name,
-          fileName,
-          oldPrice,
-          newPrice,
-          rating,
-          reviews
-        ],
-        index
-      ) => {
-        const discount = Math.round(
-          (1 - newPrice / oldPrice) * 100
-        );
-
-        return `
-          <article class="product-card">
-            <div class="product-image">
-              <img
-                src="${imagePath(fileName)}"
-                alt="${name}"
-                onerror="this.onerror=null; this.src='${fallbackImage}'"
-              >
-
-              <span class="discount">
-                -${discount}%
-              </span>
-
-              <button
-                class="favorite-button"
-                data-fav="${index}"
-                type="button"
-                aria-label="Добавить в избранное"
-              >
-                <svg>
-                  <use href="#heart"></use>
-                </svg>
-              </button>
-            </div>
-
-            <div class="product-body">
-              <h3 class="product-title">
-                ${name}
-              </h3>
-
-              <div class="rating">
-                ${renderStars(rating)}
-
-                <span class="rating-count">
-                  ${rating} (${reviews})
-                </span>
-              </div>
-
-              <div class="price-row">
-                <span class="price">
-                  ${formatPrice(newPrice)}
-                </span>
-
-                <span class="old-price">
-                  ${formatPrice(oldPrice)}
-                </span>
-              </div>
-
-             <div
-  class="quantity-control"
-  data-quantity-control="${index}"
-  hidden
->
-  <button
-    class="quantity-button"
-    data-quantity-minus="${index}"
-    type="button"
-    aria-label="Уменьшить количество"
-  >
-    −
-  </button>
-
-  <span
-    class="quantity-value"
-    data-quantity-value="${index}"
-  >
-    0
-  </span>
-
-  <button
-    class="quantity-button"
-    data-quantity-plus="${index}"
-    type="button"
-    aria-label="Увеличить количество"
-  >
-    +
-  </button>
-</div>
-
-<button
-  class="buy-button"
-  data-buy="${index}"
-  type="button"
->
-  В корзину
-</button>
-            </div>
-          </article>
-        `;
-      }
-    )
+    .map((product, index) => renderProductCard(product, index))
     .join('');
 }
 
@@ -423,8 +456,6 @@ if (carousel) {
 /* =========================================================
    ИЗБРАННОЕ И КОРЗИНА
    ========================================================= */
-
-const favorites = new Set();
 
 const savedCart = JSON.parse(
   localStorage.getItem('zebraCart') || '{}'
@@ -567,9 +598,14 @@ const removeProductFromCart = (productIndex) => {
 
 updateAllProductQuantities();
 updateCartHeader();
+updateFavoritesCount();
+renderFavoritesPage();
 
-if (carousel) {
-  carousel.addEventListener('click', (event) => {
+const productContainers = [carousel, favoritesGrid]
+  .filter(Boolean);
+
+productContainers.forEach((productContainer) => {
+  productContainer.addEventListener('click', (event) => {
     const favoriteButton =
       event.target.closest('[data-fav]');
 
@@ -593,17 +629,25 @@ if (carousel) {
         favorites.add(productIndex);
       }
 
-      favoriteButton.classList.toggle(
-        'is-favorite',
-        favorites.has(productIndex)
-      );
+      saveFavorites();
+      updateFavoritesCount();
 
-      const favoriteBadge = $('#favBadge');
+      $$('[data-fav]').forEach((button) => {
+        const isFavorite = favorites.has(
+          Number(button.dataset.fav)
+        );
 
-      if (favoriteBadge) {
-        favoriteBadge.textContent =
-          favorites.size;
-      }
+        button.classList.toggle('is-favorite', isFavorite);
+        button.setAttribute('aria-pressed', String(isFavorite));
+        button.setAttribute(
+          'aria-label',
+          isFavorite
+            ? 'Убрать из избранного'
+            : 'Добавить в избранное'
+        );
+      });
+
+      renderFavoritesPage();
 
       return;
     }
@@ -634,7 +678,7 @@ if (carousel) {
       removeProductFromCart(productIndex);
     }
   });
-}
+});
 /* =========================================================
    ПРОКРУТКА КАРУСЕЛИ
    ========================================================= */
