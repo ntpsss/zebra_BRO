@@ -95,15 +95,22 @@
     class="search-form desktop-search"
     id="desktop-search"
   >
-    <svg>
-      <use href="#search"></use>
-    </svg>
+    <button class="search-submit" type="submit" aria-label="Искать товары">
+      <svg aria-hidden="true">
+        <use href="#search"></use>
+      </svg>
+    </button>
 
     <input
       id="desktop-query"
       type="search"
       placeholder="Поиск мебели, декора и товаров для дома"
+      role="combobox"
+      aria-autocomplete="list"
+      aria-controls="search-suggestions"
+      aria-expanded="false"
     >
+    <div class="search-suggestions" id="search-suggestions" role="listbox" aria-label="Подходящие товары" hidden></div>
   </form>
 
   <nav class="account-nav desktop-account">
@@ -183,212 +190,14 @@
     </div>
 
     <div class="catalog-fullscreen-body">
-      <aside class="catalog-sidebar">
-        <button
-          class="catalog-category active"
-          type="button"
-          data-category="all"
-        >
-          <span>Вся мебель</span>
-          <span class="category-arrow">›</span>
-        </button>
-
-        <button
-          class="catalog-category sale-category"
-          type="button"
-          data-category="sale"
-        >
-          <span>Распродажа</span>
-          <span class="category-arrow">›</span>
-        </button>
-
-        <button
-          class="catalog-category"
-          type="button"
-          data-category="new"
-        >
-          <span>Новинки</span>
-          <span class="category-arrow">›</span>
-        </button>
-
-        <button
-          class="catalog-category"
-          type="button"
-          data-category="kitchen"
-        >
-          <span>Мебель для кухни</span>
-          <span class="category-arrow">›</span>
-        </button>
-
-        <button
-          class="catalog-category"
-          type="button"
-          data-category="kids"
-        >
-          <span>Детская мебель</span>
-          <span class="category-arrow">›</span>
-        </button>
-
-        <button
-          class="catalog-category"
-          type="button"
-          data-category="mattresses"
-        >
-          <span>Матрасы</span>
-          <span class="category-arrow">›</span>
-        </button>
-
-        <button
-          class="catalog-category"
-          type="button"
-          data-category="wardrobe"
-        >
-          <span>Шкафы-купе</span>
-          <span class="category-arrow">›</span>
-        </button>
-
-        <button
-          class="catalog-category"
-          type="button"
-          data-category="living"
-        >
-          <span>Мебель для гостиной</span>
-          <span class="category-arrow">›</span>
-        </button>
-
-        <button
-          class="catalog-category"
-          type="button"
-          data-category="living-rooms"
-        >
-          <span>Гостиные</span>
-          <span class="category-arrow">›</span>
-        </button>
-
-        <button
-          class="catalog-category"
-          type="button"
-          data-category="hallway"
-        >
-          <span>Прихожие</span>
-          <span class="category-arrow">›</span>
-        </button>
-
-        <button
-          class="catalog-category"
-          type="button"
-          data-category="office"
-        >
-          <span>Компьютерные и письменные столы</span>
-          <span class="category-arrow">›</span>
-        </button>
-
-        <button
-          class="catalog-category"
-          type="button"
-          data-category="shoe"
-        >
-          <span>Обувницы</span>
-          <span class="category-arrow">›</span>
-        </button>
-
-        <button
-          class="catalog-category"
-          type="button"
-          data-category="chests"
-        >
-          <span>Тумбы и комоды</span>
-          <span class="category-arrow">›</span>
-        </button>
-
-        <button
-          class="catalog-category"
-          type="button"
-          data-category="wardrobes"
-        >
-          <span>Шкафы</span>
-          <span class="category-arrow">›</span>
-        </button>
-
-        <button
-          class="catalog-category has-submenu"
-          type="button"
-          data-category="bedroom"
-        >
-          <span>Спальни</span>
-          <strong>+</strong>
-        </button>
-
-        <button
-          class="catalog-category has-submenu"
-          type="button"
-          data-category="series"
-        >
-          <span>Серии</span>
-          <strong>+</strong>
-        </button>
-
-        <button
-          class="catalog-category"
-          type="button"
-          data-category="sets"
-        >
-          <span>Готовые комплекты</span>
-          <span class="category-arrow">›</span>
-        </button>
-
-        <button
-          class="catalog-category"
-          type="button"
-          data-category="grace"
-        >
-          <span>Грэйс</span>
-          <span class="category-arrow">›</span>
-        </button>
-
-        <button
-          class="catalog-category"
-          type="button"
-          data-category="camellia"
-        >
-          <span>Камелия</span>
-          <span class="category-arrow">›</span>
-        </button>
-
-        <button
-          class="catalog-category sale-category"
-          type="button"
-          data-category="karina"
-        >
-          <span>КАРИНА от -20% до -40%</span>
-          <span class="category-arrow">›</span>
-        </button>
-
-        <button
-          class="catalog-category has-submenu"
-          type="button"
-          data-category="modules"
-        >
-          <span>Каталог всех модулей</span>
-          <strong>+</strong>
-        </button>
-
-        <button
-          class="catalog-category sale-category"
-          type="button"
-          data-category="karina-sale"
-        >
-          <span>КАРИНА -20%</span>
-          <span class="category-arrow">›</span>
-        </button>
+      <aside class="catalog-sidebar" id="catalog-sidebar" aria-label="Категории каталога" aria-busy="true">
+        <p class="products-status">Загружаем категории...</p>
       </aside>
 
       <section class="catalog-fullscreen-content">
         <div class="catalog-content-heading">
           <div>
-            <span class="catalog-content-label">
-              Популярные разделы
-            </span>
+            <span class="catalog-content-label">Товары каталога</span>
 
             <h3 id="catalog-category-title">
               Выбирайте мебель для дома
@@ -408,129 +217,11 @@
         <div
           class="catalog-products"
           id="catalog-products"
-        >
-          <a
-            class="catalog-card catalog-card-featured"
-            href="#hits"
-            data-category-card="kitchen"
-          >
-            <div class="catalog-card-image">
-              <img
-                src="../images/kitchen.png"
-                alt="Мебель для кухни"
-              >
-            </div>
-
-            <span>Мебель для кухни</span>
-          </a>
-
-          <a
-            class="catalog-card"
-            href="#hits"
-            data-category-card="kids"
-          >
-            <div class="catalog-card-image">
-              <img
-                src="../images/kids-room.png"
-                alt="Детская мебель"
-              >
-            </div>
-
-            <span>Детская мебель</span>
-          </a>
-
-          <a
-            class="catalog-card"
-            href="#hits"
-            data-category-card="mattresses"
-          >
-            <div class="catalog-card-image">
-              <img
-                src="../images/bed.png"
-                alt="Матрасы"
-              >
-            </div>
-
-            <span>Матрасы</span>
-          </a>
-
-          <a
-            class="catalog-card"
-            href="#hits"
-            data-category-card="wardrobe"
-          >
-            <div class="catalog-card-image">
-              <img
-                src="../images/wardrobe.png"
-                alt="Шкафы-купе"
-              >
-            </div>
-
-            <span>Шкафы-купе</span>
-          </a>
-
-          <a
-            class="catalog-card"
-            href="#hits"
-            data-category-card="living"
-          >
-            <div class="catalog-card-image">
-              <img
-                src="../images/living-room.png"
-                alt="Мебель для гостиной"
-              >
-            </div>
-
-            <span>Мебель для гостиной</span>
-          </a>
-
-          <a
-            class="catalog-card"
-            href="#hits"
-            data-category-card="sofa"
-          >
-            <div class="catalog-card-image">
-              <img
-                src="../images/sofa.png"
-                alt="Диваны и кресла"
-              >
-            </div>
-
-            <span>Диваны и кресла</span>
-          </a>
-
-          <a
-            class="catalog-card"
-            href="#hits"
-            data-category-card="office"
-          >
-            <div class="catalog-card-image">
-              <img
-                src="../images/chair.png"
-                alt="Столы и стулья"
-              >
-            </div>
-
-            <span>Столы и стулья</span>
-          </a>
-
-          <a
-            class="catalog-card"
-            href="#hits"
-            data-category-card="decor"
-          >
-            <div class="catalog-card-image">
-              <img
-                src="../images/lamp.png"
-                alt="Освещение и декор"
-              >
-            </div>
-
-            <span>Освещение и декор</span>
-          </a>
-        </div>
+          aria-live="polite"
+          aria-busy="true"
+        ><p class="products-status">Загружаем товары...</p></div>
         <p class="catalog-empty hidden" id="catalog-empty">
-          В этом разделе пока нет доступных подборок.
+          В выбранной категории пока нет товаров.
         </p>
       </section>
     </div>

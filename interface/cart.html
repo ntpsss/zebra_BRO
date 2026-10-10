@@ -9,6 +9,23 @@
   <link rel="stylesheet" href="./style.css">
 
   <style>
+    .cart-header {
+      display: flex !important;
+      justify-content: space-between;
+    }
+
+    .cart-header .brand {
+      order: 0;
+    }
+
+    .cart-header-actions {
+      order: 1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: auto;
+    }
+
     .cart-page {
       padding: 42px 0 70px;
     }
@@ -243,14 +260,42 @@
         font-size: 15px;
       }
     }
+
+    @media (max-width: 650px) {
+      .cart-header .brand-logo-full {
+        width: 100px !important;
+        max-height: 42px;
+      }
+
+      .cart-header-actions {
+        gap: 6px;
+      }
+
+      .cart-header-actions .catalog-button {
+        height: 40px;
+        padding: 0 7px;
+        font-size: 11px;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .cart-header .brand-logo-full {
+        width: 80px !important;
+      }
+
+      .cart-header-actions .catalog-button {
+        padding: 0 5px;
+        font-size: 10px;
+      }
+    }
   </style>
 </head>
 
 <body>
   <header class="site-header">
     <div class="container">
-      <div class="header-main">
-        <a class="brand" href="./index.html">
+      <div class="header-main cart-header">
+        <a class="brand" href="./index.html" aria-label="Золотая зебра — главная">
           <img
             class="brand-logo-full"
             src="../images/logo.png"
@@ -258,12 +303,14 @@
           >
         </a>
 
-        <a
-          class="catalog-button"
-          href="./index.html#hits"
-        >
-          Продолжить покупки
-        </a>
+        <div class="cart-header-actions">
+          <a class="catalog-button" href="./index.html#hits">
+            Продолжить покупки
+          </a>
+          <a class="catalog-button" href="./favorites.html">
+            Избранное
+          </a>
+        </div>
       </div>
     </div>
   </header>

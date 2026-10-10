@@ -64,9 +64,6 @@ async function loadCategories() {
   
   categories = result;
 }
-loadCategories().catch((error) => {
-  console.error('Не удалось загрузить категории:', error);
-});
 
 const $ = (selector) => {
   return document.querySelector(selector);
@@ -95,6 +92,32 @@ const mobileCatalogButton = $('#mobile-catalog-button');
 const catalogPanel = $('#catalog-panel');
 const catalogClose = $('#catalog-close');
 const catalogIcon = $('[data-catalog-icon]');
+const siteHeader = $('.site-header');
+const mobileNav = $('.mobile-nav');
+
+const syncCatalogBounds = () => {
+  const headerHeight = siteHeader?.getBoundingClientRect().height || 0;
+  const mobileNavHeight = mobileNav && getComputedStyle(mobileNav).display !== 'none'
+    ? mobileNav.getBoundingClientRect().height
+    : 0;
+
+  document.documentElement.style.setProperty('--site-header-height', `${headerHeight}px`);
+  document.documentElement.style.setProperty('--catalog-top', `${headerHeight}px`);
+  document.documentElement.style.setProperty('--catalog-bottom', `${mobileNavHeight}px`);
+};
+
+syncCatalogBounds();
+window.addEventListener('resize', syncCatalogBounds);
+
+if ('ResizeObserver' in window) {
+  const catalogBoundsObserver = new ResizeObserver(syncCatalogBounds);
+  if (siteHeader) {
+    catalogBoundsObserver.observe(siteHeader);
+  }
+  if (mobileNav) {
+    catalogBoundsObserver.observe(mobileNav);
+  }
+}
 
 const setCatalogOpen = (isOpen) => {
   if (!catalogPanel) return;
@@ -163,74 +186,222 @@ document.addEventListener('keydown', (event) => {
    ПЕРЕКЛЮЧЕНИЕ КАТЕГОРИЙ В КАТАЛОГЕ
    ========================================================= */
 
-const categoryButtons = $$('.catalog-category');
-const categoryCards = $$('[data-category-card]');
+const categorySidebar = $('#catalog-sidebar');
+const catalogProducts = $('#catalog-products');
 const categoryTitle = $('#catalog-category-title');
 const emptyCatalogMessage = $('#catalog-empty');
+let selectedCatalogCategory = 'all';
+let categoriesLoaded = false;
+let productsLoaded = false;
+let categoryLoadFailed = false;
+let productLoadFailed = false;
+const searchResultsPage = $('#search-results');
+const initialSearchQuery = searchResultsPage
+  ? new URLSearchParams(window.location.search).get('q') ?? ''
+  : '';
+let productSearchQuery = initialSearchQuery;
 
-const categoryTitles = {
-  all: 'Выбирайте мебель для дома',
-  sale: 'Распродажа мебели',
-  new: 'Новинки',
-  kitchen: 'Мебель для кухни',
-  kids: 'Детская мебель',
-  mattresses: 'Матрасы',
-  wardrobe: 'Шкафы-купе',
-  living: 'Мебель для гостиной',
-  'living-rooms': 'Гостиные',
-  sofa: 'Диваны и кресла',
-  hallway: 'Прихожие',
-  office: 'Компьютерные и письменные столы',
-  decor: 'Освещение и декор',
-  shoe: 'Обувницы',
-  chests: 'Тумбы и комоды',
-  wardrobes: 'Шкафы',
-  bedroom: 'Спальни',
-  series: 'Серии мебели',
-  sets: 'Готовые комплекты',
-  grace: 'Коллекция «Грэйс»',
-  camellia: 'Коллекция «Камелия»',
-  karina: 'КАРИНА со скидкой',
-  modules: 'Каталог всех модулей',
-  'karina-sale': 'КАРИНА -20%'
+const normalizeSearchText = (value) =>
+  String(value ?? '')
+    .toLocaleLowerCase('ru-RU')
+    .replaceAll('ё', 'е')
+    .trim();
+
+const matchesProductSearch = (product) => {
+  const query = normalizeSearchText(productSearchQuery);
+  if (!query) {
+    return true;
+  }
+
+  const productCategoryId = getProductCategoryId(product);
+  const categoryName = categories.find(
+    (category) => String(category.id) === String(productCategoryId)
+  )?.name;
+  const searchableText = normalizeSearchText([
+    product.name,
+    product.description,
+    categoryName,
+    product.category?.name,
+    typeof product.category === 'string' ? product.category : ''
+  ].join(' '));
+
+  return query.split(/\s+/).every((term) => searchableText.includes(term));
 };
 
-categoryButtons.forEach((button) => {
-  button.addEventListener('click', () => {
-    const selectedCategory = button.dataset.category;
+const getProductCategoryId = (product) =>
+  product.categoryId ??
+  product.category_id ??
+  product.category?.id;
 
-    categoryButtons.forEach((categoryButton) => {
-      categoryButton.classList.remove('active');
-    });
+const renderProductDetail = () => {
+  const productDetail = $('#product-detail');
+  if (!productDetail || !productsLoaded) {
+    return;
+  }
+  productDetail.setAttribute('aria-busy', 'false');
 
-    button.classList.add('active');
+  const productId = new URLSearchParams(window.location.search).get('id');
+  const productIndex = products.findIndex(
+    (product) => String(product.id) === productId
+  );
+  const product = products[productIndex];
 
-    if (categoryTitle) {
-      categoryTitle.textContent =
-        categoryTitles[selectedCategory] ||
-        categoryTitles.all;
+  if (!product) {
+    productDetail.innerHTML = `
+      <section class="product-detail-message" role="status">
+        <h1>Товар не найден</h1>
+        <p>Возможно, товар был удалён или ссылка устарела.</p>
+        <a class="catalog-button" href="./index.html#hits">Вернуться к товарам</a>
+      </section>
+    `;
+    return;
+  }
+
+  const name = escapeHTML(product.name);
+  const image = product.image || product.imageUrl || product.image_url;
+  const imageSource = image ? escapeHTML(image) : fallbackImage;
+  const price = Number(product.price);
+  const oldPrice = Number(product.oldPrice ?? product.old_price);
+  const hasDiscount = Number.isFinite(oldPrice) && oldPrice > price;
+  const category = product.category?.name ||
+    (typeof product.category === 'string' ? product.category : '') ||
+    categories.find((item) => String(item.id) === String(getProductCategoryId(product)))?.name ||
+    '';
+  const description = String(product.description ?? '').trim();
+  const stock = product.stock ?? product.quantity;
+  const quantity = cartItems.get(productIndex) || 0;
+
+  document.title = `${product.name} — Золотая зебра`;
+  productDetail.innerHTML = `
+    <a class="product-detail-back" href="./index.html#hits">← Все товары</a>
+    <article class="product-detail-card">
+      <div class="product-detail-image">
+        <img
+          src="${imageSource}"
+          alt="${name}"
+          onerror="this.onerror=null; this.src='${fallbackImage}'"
+        >
+        ${hasDiscount ? `<span class="discount">-${Math.round((1 - price / oldPrice) * 100)}%</span>` : ''}
+      </div>
+      <div class="product-detail-info">
+        ${category ? `<p class="eyebrow">${escapeHTML(category)}</p>` : ''}
+        <h1>${name}</h1>
+        ${description
+          ? `<p class="product-detail-description">${escapeHTML(description)}</p>`
+          : '<p class="product-detail-description">Подробности о товаре можно уточнить у консультанта магазина.</p>'}
+        ${stock !== undefined && stock !== null
+          ? `<p class="product-detail-stock">Наличие: ${escapeHTML(stock)}</p>`
+          : ''}
+        <div class="product-detail-price">
+          <span class="price">${formatPrice(price)}</span>
+          ${hasDiscount ? `<span class="old-price">${formatPrice(oldPrice)}</span>` : ''}
+        </div>
+        <div class="product-detail-actions">
+          <div class="quantity-control" data-quantity-control="${productIndex}" ${quantity > 0 ? '' : 'hidden'}>
+            <button class="quantity-button" data-quantity-minus="${productIndex}" type="button" aria-label="Уменьшить количество">−</button>
+            <span class="quantity-value" data-quantity-value="${productIndex}">${quantity}</span>
+            <button class="quantity-button" data-quantity-plus="${productIndex}" type="button" aria-label="Увеличить количество">+</button>
+          </div>
+          <button class="buy-button" data-buy="${productIndex}" type="button" ${quantity > 0 ? 'hidden' : ''}>В корзину</button>
+          <button class="favorite-button product-detail-favorite${favorites.has(productIndex) ? ' is-favorite' : ''}" data-fav="${productIndex}" type="button" aria-label="${favorites.has(productIndex) ? 'Убрать из избранного' : 'Добавить в избранное'}" aria-pressed="${favorites.has(productIndex)}">
+            <svg aria-hidden="true"><use href="#heart"></use></svg>
+          </button>
+        </div>
+      </div>
+    </article>
+  `;
+  updateProductQuantity(productIndex);
+};
+
+const renderCatalog = () => {
+  if (categorySidebar) {
+    categorySidebar.setAttribute('aria-busy', String(!categoriesLoaded));
+    if (categoriesLoaded) {
+      categorySidebar.innerHTML = categoryLoadFailed
+        ? '<p class="products-status">Не удалось загрузить категории.</p>'
+        : [
+            `<button class="catalog-category${selectedCatalogCategory === 'all' ? ' active' : ''}" type="button" data-category="all"><span>Вся мебель</span><strong>${productsLoaded ? products.length : '—'}</strong></button>`,
+            ...categories.map((category) => {
+              const categoryId = String(category.id);
+              const count = productsLoaded
+                ? products.filter(
+                    (product) => String(getProductCategoryId(product)) === categoryId
+                  ).length
+                : '—';
+              return `<button class="catalog-category${selectedCatalogCategory === categoryId ? ' active' : ''}" type="button" data-category="${escapeHTML(categoryId)}"><span>${escapeHTML(category.name)}</span><strong>${count}</strong></button>`;
+            })
+          ].join('');
     }
+  }
 
-    let visibleCardCount = 0;
+  if (categoryTitle) {
+    const selectedCategory = categories.find(
+      (category) => String(category.id) === selectedCatalogCategory
+    );
+    categoryTitle.textContent = searchResultsPage
+      ? (productSearchQuery
+          ? `Результаты поиска: ${productSearchQuery}`
+          : 'Все товары')
+      : selectedCategory?.name ||
+        (selectedCatalogCategory === 'all' ? 'Выбирайте мебель для дома' : 'Категория');
+  }
+  if (searchResultsPage) {
+    document.title = productSearchQuery
+      ? `Поиск: ${productSearchQuery} — Золотая зебра`
+      : 'Каталог товаров — Золотая зебра';
+  }
 
-    categoryCards.forEach((card) => {
-      const cardCategory = card.dataset.categoryCard;
+  if (!catalogProducts) {
+    return;
+  }
 
-      const shouldShow =
-        selectedCategory === 'all' ||
-        cardCategory === selectedCategory;
-
-      card.hidden = !shouldShow;
-      if (shouldShow) visibleCardCount += 1;
-    });
-
+  catalogProducts.setAttribute('aria-busy', String(!productsLoaded));
+  if (productLoadFailed) {
+    catalogProducts.innerHTML = '<p class="products-status">Не удалось загрузить товары. Попробуйте обновить страницу.</p>';
     if (emptyCatalogMessage) {
-      emptyCatalogMessage.classList.toggle(
-        'hidden',
-        visibleCardCount > 0
-      );
+      emptyCatalogMessage.classList.add('hidden');
     }
-  });
+    return;
+  }
+
+  if (!productsLoaded) {
+    catalogProducts.innerHTML = '<p class="products-status">Загружаем товары...</p>';
+    if (emptyCatalogMessage) {
+      emptyCatalogMessage.classList.add('hidden');
+    }
+    return;
+  }
+
+  const visibleProducts = products
+    .map((product, index) => ({ product, index }))
+    .filter(({ product }) =>
+      (
+        selectedCatalogCategory === 'all' ||
+        String(getProductCategoryId(product)) === selectedCatalogCategory
+      ) &&
+      matchesProductSearch(product)
+    );
+
+  catalogProducts.innerHTML = visibleProducts
+    .map(({ product, index }) => renderProductCard(product, index))
+    .join('');
+
+  if (emptyCatalogMessage) {
+    emptyCatalogMessage.classList.toggle('hidden', visibleProducts.length > 0);
+    emptyCatalogMessage.textContent = productSearchQuery
+      ? 'По вашему запросу товары не найдены.'
+      : 'В выбранной категории пока нет товаров.';
+  }
+};
+
+categorySidebar?.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-category]');
+  if (!button) {
+    return;
+  }
+
+  selectedCatalogCategory = button.dataset.category;
+  renderCatalog();
 });
 
 /* =========================================================
@@ -351,6 +522,7 @@ const renderProductCard = (
   const price = Number(product.price);
   const image = product.image || product.imageUrl || product.image_url;
   const imageSource = image ? escapeHTML(image) : fallbackImage;
+  const productUrl = `./product.html?id=${encodeURIComponent(product.id)}`;
   const isFavorite = favorites.has(index);
   const rating = Number(product.rating);
   const reviews = Number(product.reviews);
@@ -361,11 +533,13 @@ const renderProductCard = (
   return `
     <article class="product-card">
       <div class="product-image">
-        <img
-          src="${imageSource}"
-          alt="${name}"
-          onerror="this.onerror=null; this.src='${fallbackImage}'"
-        >
+        <a class="product-detail-link" href="${productUrl}" aria-label="Подробнее: ${name}">
+          <img
+            src="${imageSource}"
+            alt="${name}"
+            onerror="this.onerror=null; this.src='${fallbackImage}'"
+          >
+        </a>
 
         ${hasDiscount ? `<span class="discount">-${Math.round((1 - price / oldPrice) * 100)}%</span>` : ''}
 
@@ -383,7 +557,8 @@ const renderProductCard = (
       </div>
 
       <div class="product-body">
-        <h3 class="product-title">${name}</h3>
+        <h3 class="product-title"><a class="product-title-link" href="${productUrl}">${name}</a></h3>
+        <a class="product-card-more" href="${productUrl}">Подробнее о товаре →</a>
 
         ${hasRating ? `
           <div class="rating">
@@ -521,34 +696,40 @@ const updateProductQuantity = (productIndex) => {
   const quantity =
     cartItems.get(productIndex) || 0;
 
-  const quantityControl = document.querySelector(
+  const quantityControls = $$(
     `[data-quantity-control="${productIndex}"]`
   );
 
-  const quantityValue = document.querySelector(
+  const quantityValues = $$(
     `[data-quantity-value="${productIndex}"]`
   );
 
-  const buyButton = document.querySelector(
+  const buyButtons = $$(
     `[data-buy="${productIndex}"]`
   );
 
-  if (
-    !quantityControl ||
-    !quantityValue ||
-    !buyButton
-  ) {
+  if (!quantityControls.length || !quantityValues.length || !buyButtons.length) {
     return;
   }
 
-  quantityValue.textContent = quantity;
+  quantityValues.forEach((quantityValue) => {
+    quantityValue.textContent = quantity;
+  });
 
   if (quantity > 0) {
-    quantityControl.hidden = false;
-    buyButton.hidden = true;
+    quantityControls.forEach((quantityControl) => {
+      quantityControl.hidden = false;
+    });
+    buyButtons.forEach((buyButton) => {
+      buyButton.hidden = true;
+    });
   } else {
-    quantityControl.hidden = true;
-    buyButton.hidden = false;
+    quantityControls.forEach((quantityControl) => {
+      quantityControl.hidden = true;
+    });
+    buyButtons.forEach((buyButton) => {
+      buyButton.hidden = false;
+    });
   }
 };
 
@@ -627,14 +808,29 @@ if (carousel) {
   carousel.innerHTML = '<p class="products-status">Загружаем товары...</p>';
 }
 
+loadCategories()
+  .then(() => {
+    categoriesLoaded = true;
+    renderProductSearchResults();
+    renderSearchSuggestions();
+    renderProductDetail();
+  })
+  .catch((error) => {
+    console.error('Не удалось загрузить категории:', error);
+    categoryLoadFailed = true;
+    categoriesLoaded = true;
+    renderCatalog();
+  });
+
 loadProducts()
   .then(() => {
+    productsLoaded = true;
     if (carousel) {
       carousel.setAttribute('aria-busy', 'false');
-      carousel.innerHTML = products.length
-        ? products.map((product, index) => renderProductCard(product, index)).join('')
-        : '<p class="products-status">Товары пока не добавлены.</p>';
     }
+    renderProductSearchResults();
+    renderSearchSuggestions();
+    renderCatalog();
 
     for (const productIndex of favorites) {
       if (!products[productIndex]) {
@@ -646,16 +842,36 @@ loadProducts()
     updateAllProductQuantities();
     updateCartHeader();
     renderFavoritesPage();
+    renderProductDetail();
   })
   .catch((error) => {
     console.error('Не удалось загрузить товары:', error);
+    productLoadFailed = true;
+    productsLoaded = true;
+    renderCatalog();
+    const productDetail = $('#product-detail');
+    if (productDetail) {
+      productDetail.setAttribute('aria-busy', 'false');
+      productDetail.innerHTML = `
+        <section class="product-detail-message" role="alert">
+          <h1>Не удалось загрузить товар</h1>
+          <p>Проверьте подключение и попробуйте обновить страницу.</p>
+          <a class="catalog-button" href="./index.html#hits">Вернуться к товарам</a>
+        </section>
+      `;
+    }
     if (carousel) {
       carousel.setAttribute('aria-busy', 'false');
       carousel.innerHTML = '<p class="products-status">Не удалось загрузить товары. Попробуйте обновить страницу.</p>';
     }
   });
 
-const productContainers = [carousel, favoritesGrid]
+const productContainers = [
+  carousel,
+  favoritesGrid,
+  catalogProducts,
+  $('#product-detail')
+]
   .filter(Boolean);
 
 productContainers.forEach((productContainer) => {
@@ -763,46 +979,181 @@ if (carousel && nextButton) {
    ========================================================= */
 
 const desktopSearchInput = $('#desktop-query');
+const searchSuggestions = $('#search-suggestions');
+let activeSearchSuggestion = -1;
 
-const filterProducts = (query) => {
-  const normalizedQuery = query
-    .trim()
-    .toLowerCase();
+const closeSearchSuggestions = () => {
+  if (!searchSuggestions || !desktopSearchInput) {
+    return;
+  }
 
-  const productCards = $$('.product-card');
+  searchSuggestions.hidden = true;
+  searchSuggestions.replaceChildren();
+  desktopSearchInput.setAttribute('aria-expanded', 'false');
+  desktopSearchInput.removeAttribute('aria-activedescendant');
+  activeSearchSuggestion = -1;
+};
 
-  productCards.forEach((card) => {
-    const title = card
-      .querySelector('.product-title')
-      ?.textContent
-      .toLowerCase() || '';
+const updateActiveSearchSuggestion = () => {
+  if (!searchSuggestions || !desktopSearchInput) {
+    return;
+  }
 
-    const shouldShow =
-      normalizedQuery === '' ||
-      title.includes(normalizedQuery);
-
-    card.hidden = !shouldShow;
+  const options = searchSuggestions.querySelectorAll('[role="option"]');
+  options.forEach((option, index) => {
+    const isActive = index === activeSearchSuggestion;
+    option.setAttribute('aria-selected', String(isActive));
+    if (isActive) {
+      desktopSearchInput.setAttribute('aria-activedescendant', option.id);
+      option.scrollIntoView({ block: 'nearest' });
+    }
   });
+
+  if (activeSearchSuggestion < 0 || activeSearchSuggestion >= options.length) {
+    desktopSearchInput.removeAttribute('aria-activedescendant');
+  }
+};
+
+const renderSearchSuggestions = () => {
+  if (!desktopSearchInput || !searchSuggestions) {
+    return;
+  }
+
+  const query = normalizeSearchText(desktopSearchInput.value);
+  if (!query || !productsLoaded) {
+    closeSearchSuggestions();
+    return;
+  }
+
+  const suggestions = products
+    .map((product, index) => ({ product, index }))
+    .filter(({ product }) => matchesProductSearch(product))
+    .sort((left, right) => {
+      const leftName = normalizeSearchText(left.product.name);
+      const rightName = normalizeSearchText(right.product.name);
+      const leftStartsWithQuery = leftName.startsWith(query);
+      const rightStartsWithQuery = rightName.startsWith(query);
+      return Number(rightStartsWithQuery) - Number(leftStartsWithQuery) ||
+        leftName.localeCompare(rightName, 'ru');
+    })
+    .slice(0, 7);
+
+  if (!suggestions.length) {
+    closeSearchSuggestions();
+    return;
+  }
+
+  searchSuggestions.innerHTML = suggestions.map(({ product, index }) => `
+    <button
+      class="search-suggestion"
+      id="search-suggestion-${index}"
+      type="button"
+      role="option"
+      aria-selected="false"
+      data-search-suggestion="${index}"
+    >
+      <span class="search-suggestion-name">${escapeHTML(product.name)}</span>
+      <span class="search-suggestion-price">${formatPrice(Number(product.price))}</span>
+    </button>
+  `).join('');
+  searchSuggestions.hidden = false;
+  desktopSearchInput.setAttribute('aria-expanded', 'true');
+  activeSearchSuggestion = -1;
+};
+
+const selectSearchSuggestion = (productIndex) => {
+  const product = products[productIndex];
+  if (!product || !desktopSearchInput) {
+    return;
+  }
+
+  closeSearchSuggestions();
+  window.location.href = `./search.html?q=${encodeURIComponent(product.name)}`;
+};
+
+const renderProductSearchResults = () => {
+  if (carousel && productsLoaded) {
+    const matchingProducts = products
+      .map((product, index) => ({ product, index }))
+      .filter(({ product }) => matchesProductSearch(product));
+
+    carousel.innerHTML = matchingProducts.length
+      ? matchingProducts
+          .map(({ product, index }) => renderProductCard(product, index))
+          .join('')
+      : `<p class="products-status">${products.length
+          ? 'По вашему запросу товары не найдены.'
+          : 'Товары пока не добавлены.'}</p>`;
+    updateAllProductQuantities();
+  }
+
+  renderCatalog();
 };
 
 if (desktopSearchInput) {
   desktopSearchInput.addEventListener('input', () => {
-    filterProducts(desktopSearchInput.value);
+    renderSearchSuggestions();
   });
+
+  desktopSearchInput.addEventListener('keydown', (event) => {
+    const optionCount = searchSuggestions?.querySelectorAll('[role="option"]').length || 0;
+
+    if (event.key === 'ArrowDown' && optionCount) {
+      event.preventDefault();
+      activeSearchSuggestion = (activeSearchSuggestion + 1) % optionCount;
+      updateActiveSearchSuggestion();
+    } else if (event.key === 'ArrowUp' && optionCount) {
+      event.preventDefault();
+      activeSearchSuggestion = activeSearchSuggestion <= 0
+        ? optionCount - 1
+        : activeSearchSuggestion - 1;
+      updateActiveSearchSuggestion();
+    } else if (event.key === 'Enter' && activeSearchSuggestion >= 0) {
+      event.preventDefault();
+      const activeOption = searchSuggestions.querySelectorAll('[role="option"]')[
+        activeSearchSuggestion
+      ];
+      if (activeOption) {
+        selectSearchSuggestion(Number(activeOption.dataset.searchSuggestion));
+      }
+    } else if (event.key === 'Escape') {
+      closeSearchSuggestions();
+    }
+  });
+
+  desktopSearchInput.addEventListener('focus', renderSearchSuggestions);
 }
+
+searchSuggestions?.addEventListener('click', (event) => {
+  const option = event.target.closest('[data-search-suggestion]');
+  if (option) {
+    selectSearchSuggestion(Number(option.dataset.searchSuggestion));
+  }
+});
+
+document.addEventListener('click', (event) => {
+  if (!event.target.closest('#desktop-search')) {
+    closeSearchSuggestions();
+  }
+});
 
 $('#desktop-search')?.addEventListener(
   'submit',
   (event) => {
     event.preventDefault();
-
-    const input = $('#desktop-query');
-
-    if (input) {
-      filterProducts(input.value);
+    const query = desktopSearchInput?.value.trim() ?? '';
+    closeSearchSuggestions();
+    if (!query) {
+      desktopSearchInput?.focus();
+      return;
     }
+    window.location.href = `./search.html?q=${encodeURIComponent(query)}`;
   }
 );
+
+if (searchResultsPage && desktopSearchInput) {
+  desktopSearchInput.value = initialSearchQuery;
+}
 
 /* =========================================================
    ПОДПИСКА

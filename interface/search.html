@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Поиск товаров — Золотая зебра</title>
+    <link rel="stylesheet" href="./style.css">
+  </head>
+  <body>
+    <svg hidden aria-hidden="true">
+      <symbol id="search" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="7" />
+        <path d="m21 21-4.3-4.3" />
+      </symbol>
+      <symbol id="heart" viewBox="0 0 24 24">
+        <path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7Z" />
+      </symbol>
+      <symbol id="bag" viewBox="0 0 24 24">
+        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18" />
+        <path d="M16 10a4 4 0 0 1-8 0" />
+      </symbol>
+      <symbol id="home" viewBox="0 0 24 24">
+        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      </symbol>
+    </svg>
+
+    <header class="site-header search-page-header">
+      <div class="container">
+        <div class="header-main">
+          <a class="brand" href="./index.html#top" aria-label="Золотая зебра — главная">
+            <img class="brand-logo-full" src="../images/logo.png" alt="Золотая зебра">
+          </a>
+
+          <form class="search-form desktop-search" id="desktop-search">
+            <button class="search-submit" type="submit" aria-label="Искать товары">
+              <svg aria-hidden="true"><use href="#search"></use></svg>
+            </button>
+            <input
+              id="desktop-query"
+              type="search"
+              placeholder="Поиск мебели, декора и товаров для дома"
+              role="combobox"
+              aria-autocomplete="list"
+              aria-controls="search-suggestions"
+              aria-expanded="false"
+              required
+            >
+            <div class="search-suggestions" id="search-suggestions" role="listbox" aria-label="Подходящие товары" hidden></div>
+          </form>
+
+          <nav class="account-nav desktop-account" aria-label="Покупателям">
+            <a class="account-link" href="./favorites.html">
+              <svg aria-hidden="true"><use href="#heart"></use></svg>
+              <span class="badge" id="favBadge">0</span>
+              <span>Избранное</span>
+            </a>
+            <a class="account-link" href="./cart.html" aria-label="Корзина">
+              <svg aria-hidden="true"><use href="#bag"></use></svg>
+              <span class="badge" id="cartBadge">0</span>
+              <span id="cartSum">0 ₽</span>
+            </a>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <nav class="mobile-nav" aria-label="Основная навигация">
+      <a href="./index.html#top">
+        <svg aria-hidden="true"><use href="#home"></use></svg>
+        <span>Главная</span>
+      </a>
+      <a href="./favorites.html">
+        <svg aria-hidden="true"><use href="#heart"></use></svg>
+        <span>Избранное</span>
+      </a>
+      <a href="./cart.html">
+        <svg aria-hidden="true"><use href="#bag"></use></svg>
+        <span>Корзина</span>
+      </a>
+    </nav>
+
+    <main class="search-results-page" id="search-results">
+      <div class="container">
+        <a class="product-detail-back" href="./index.html#top">← На главную</a>
+        <section class="catalog-fullscreen-content" aria-labelledby="catalog-category-title">
+          <div class="catalog-content-heading">
+            <div>
+              <span class="catalog-content-label">Каталог товаров</span>
+              <h1 id="catalog-category-title">Результаты поиска</h1>
+            </div>
+          </div>
+          <div class="catalog-products" id="catalog-products" aria-live="polite" aria-busy="true">
+            <p class="products-status">Загружаем товары...</p>
+          </div>
+          <p class="catalog-empty hidden" id="catalog-empty">По вашему запросу товары не найдены.</p>
+        </section>
+      </div>
+    </main>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
