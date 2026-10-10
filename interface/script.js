@@ -1,3 +1,74 @@
+const API_URL = 'https://server-zebrabro.onrender.com/api';
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp'
+]);
+let products = [];
+let categories = [];
+
+const imagePreviewUrls = new WeakMap();
+
+function escapeHTML(value) {
+  return String(value ?? '').replace(
+    /[&<>"']/g,
+    (character) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    })[character]
+  );
+}
+
+async function readRespones(response) {
+  const text = await response.text();
+  if(!text){
+    return null;
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    return { message: text.slice(0, 240) };
+  }
+}
+async function request(path, options = {}) {
+  const response = await fetch(`${API_URL}${path}`, options);
+  const result = readRespones(response);
+
+  if(!response.ok){
+    const detail = typeof result?.message === 'string'? 
+    result.message: typeof result?.error === 'string'
+    ?result.error: `Сервер вернул ошибку ${response.status}.`;
+
+    throw new Error(detail);
+  }
+  return result;
+}
+async function loadProducts() {
+  const result = await request('/products');
+  if(!Array.isArray(result)){
+    throw new Error('Сервер вернул некорректный список товаров.');
+  }
+
+  products = result;
+  console.log(products);
+}
+async function loadCategories() {
+  const result = await request('/categories');
+  if(!Array.isArray(result)){
+    throw new Error('Сервер вернул некорректный список категорий.');
+  }
+  
+  categories = result;
+  console.log(categories);
+}
+loadCategories();
+loadProducts();
+
 const $ = (selector) => {
   return document.querySelector(selector);
 };
@@ -186,14 +257,6 @@ $$('[data-clear]').forEach((button) => {
    КАТЕГОРИИ НА ГЛАВНОЙ
    ========================================================= */
 
-const categories = [
-  ['Гостиная', 'living-room.png'],
-  ['Спальня', 'bedroom.png'],
-  ['Кухня', 'kitchen.png'],
-  ['Детская', 'kids-room.png'],
-  ['Текстиль', 'textile.png'],
-  ['Новинки', 'new.png']
-];
 
 const quickCategories = $('#quickCats');
 
@@ -225,65 +288,6 @@ if (quickCategories) {
 /* =========================================================
    ТОВАРЫ
    ========================================================= */
-
-const products = [
-  [
-    'Диван «Зебра»',
-    'sofa.png',
-    89990,
-    62990,
-    4.9,
-    148
-  ],
-  [
-    'Кровать «Аристократ» 160×200',
-    'bed.png',
-    74990,
-    52490,
-    4.8,
-    96
-  ],
-  [
-    'Кресло «Адель»',
-    'chair.png',
-    29990,
-    20990,
-    4.7,
-    183
-  ],
-  [
-    'Стул «Золотой»',
-    'chair-gold.png',
-    8990,
-    6290,
-    4.6,
-    211
-  ],
-  [
-    'Шкаф «Версаль»',
-    'wardrobe.png',
-    109990,
-    76990,
-    4.8,
-    72
-  ],
-  [
-    'Кухня «Модерн»',
-    'kitchen.png',
-    189990,
-    132990,
-    4.9,
-    54
-  ],
-  [
-    'Торшер «Шампань»',
-    'lamp.png',
-    15990,
-    11190,
-    4.7,
-    119
-  ]
-];
 
 const favorites = new Set(
   JSON.parse(localStorage.getItem('zebraFavorites') || '[]')
@@ -341,7 +345,7 @@ const renderStars = (rating) => {
 };
 
 const renderProductCard = (
-  [name, fileName, oldPrice, newPrice, rating, reviews],
+  [],
   index
 ) => {
   const discount = Math.round(
