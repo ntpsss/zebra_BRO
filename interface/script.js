@@ -761,6 +761,34 @@ const addProductToCart = (productIndex) => {
   updateCartHeader();
 };
 
+const bounceCartIcon = () => {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    return;
+  }
+
+  const cartBadge = $('#cartBadge');
+  const cartLink = cartBadge?.closest('a') ||
+    document.querySelector('header a[href="./cart.html"]');
+  const cartIcon = cartLink?.querySelector('svg');
+
+  if (!cartIcon) {
+    return;
+  }
+
+  cartIcon.getAnimations().forEach((animation) => animation.cancel());
+  cartIcon.animate(
+    [
+      { transform: 'translateY(0) scale(1)' },
+      { transform: 'translateY(-7px) scale(1.12)', offset: 0.4 },
+      { transform: 'translateY(0) scale(1)' }
+    ],
+    {
+      duration: 420,
+      easing: 'cubic-bezier(.2, .7, .25, 1)'
+    }
+  );
+};
+
 const removeProductFromCart = (productIndex) => {
   const product = products[productIndex];
   if (!product) {
@@ -927,6 +955,7 @@ productContainers.forEach((productContainer) => {
         buyButton.dataset.buy
       );
 
+      bounceCartIcon();
       addProductToCart(productIndex);
       return;
     }
@@ -936,6 +965,7 @@ productContainers.forEach((productContainer) => {
         plusButton.dataset.quantityPlus
       );
 
+      bounceCartIcon();
       addProductToCart(productIndex);
       return;
     }
