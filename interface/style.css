@@ -473,6 +473,11 @@ h2 {
   display: none;
 }
 
+.products-status {
+  margin: 12px 4px;
+  color: var(--muted);
+}
+
 .product-card {
   flex: 0 0 72%;
   min-width: 220px;

@@ -37,7 +37,7 @@ async function readRespones(response) {
 }
 async function request(path, options = {}) {
   const response = await fetch(`${API_URL}${path}`, options);
-  const result = readRespones(response);
+  const result = await readRespones(response);
 
   if(!response.ok){
     const detail = typeof result?.message === 'string'? 
@@ -55,7 +55,6 @@ async function loadProducts() {
   }
 
   products = result;
-  console.log(products);
 }
 async function loadCategories() {
   const result = await request('/categories');
@@ -64,10 +63,10 @@ async function loadCategories() {
   }
   
   categories = result;
-  console.log(categories);
 }
-loadCategories();
-loadProducts();
+loadCategories().catch((error) => {
+  console.error('Не удалось загрузить категории:', error);
+});
 
 const $ = (selector) => {
   return document.querySelector(selector);
@@ -292,7 +291,7 @@ if (quickCategories) {
 const favorites = new Set(
   JSON.parse(localStorage.getItem('zebraFavorites') || '[]')
     .map(Number)
-    .filter((index) => Number.isInteger(index) && products[index])
+    .filter(Number.isInteger)
 );
 
 const favoritesGrid = $('#favorites-grid');
@@ -345,24 +344,30 @@ const renderStars = (rating) => {
 };
 
 const renderProductCard = (
-  [],
+  product,
   index
 ) => {
-  const discount = Math.round(
-    (1 - newPrice / oldPrice) * 100
-  );
+  const name = escapeHTML(product.name);
+  const price = Number(product.price);
+  const image = product.image || product.imageUrl || product.image_url;
+  const imageSource = image ? escapeHTML(image) : fallbackImage;
   const isFavorite = favorites.has(index);
+  const rating = Number(product.rating);
+  const reviews = Number(product.reviews);
+  const oldPrice = Number(product.oldPrice ?? product.old_price);
+  const hasRating = Number.isFinite(rating) && rating > 0;
+  const hasDiscount = Number.isFinite(oldPrice) && oldPrice > price;
 
   return `
     <article class="product-card">
       <div class="product-image">
         <img
-          src="${imagePath(fileName)}"
+          src="${imageSource}"
           alt="${name}"
           onerror="this.onerror=null; this.src='${fallbackImage}'"
         >
 
-        <span class="discount">-${discount}%</span>
+        ${hasDiscount ? `<span class="discount">-${Math.round((1 - price / oldPrice) * 100)}%</span>` : ''}
 
         <button
           class="favorite-button${isFavorite ? ' is-favorite' : ''}"
@@ -380,14 +385,16 @@ const renderProductCard = (
       <div class="product-body">
         <h3 class="product-title">${name}</h3>
 
-        <div class="rating">
-          ${renderStars(rating)}
-          <span class="rating-count">${rating} (${reviews})</span>
-        </div>
+        ${hasRating ? `
+          <div class="rating">
+            ${renderStars(rating)}
+            <span class="rating-count">${rating}${Number.isFinite(reviews) ? ` (${reviews})` : ''}</span>
+          </div>
+        ` : ''}
 
         <div class="price-row">
-          <span class="price">${formatPrice(newPrice)}</span>
-          <span class="old-price">${formatPrice(oldPrice)}</span>
+          <span class="price">${formatPrice(price)}</span>
+          ${hasDiscount ? `<span class="old-price">${formatPrice(oldPrice)}</span>` : ''}
         </div>
 
         <div
@@ -447,12 +454,6 @@ const renderFavoritesPage = () => {
 
 const carousel = $('#carousel');
 
-if (carousel) {
-  carousel.innerHTML = products
-    .map((product, index) => renderProductCard(product, index))
-    .join('');
-}
-
 /* =========================================================
    ИЗБРАННОЕ И КОРЗИНА
    ========================================================= */
@@ -475,10 +476,20 @@ const cart = {
   total: 0
 };
 
-cartItems.forEach((quantity, productIndex) => {
-  cart.count += quantity;
-  cart.total += products[productIndex][3] * quantity;
-});
+const recalculateCart = () => {
+  cart.count = 0;
+  cart.total = 0;
+
+  cartItems.forEach((quantity, productIndex) => {
+    const product = products[productIndex];
+    if (!product || quantity <= 0) {
+      return;
+    }
+
+    cart.count += quantity;
+    cart.total += Number(product.price) * quantity;
+  });
+};
 
 const saveCart = () => {
   const cartObject = {};
@@ -548,6 +559,11 @@ const updateAllProductQuantities = () => {
 };
 
 const addProductToCart = (productIndex) => {
+  const product = products[productIndex];
+  if (!product) {
+    return;
+  }
+
   const currentQuantity =
     cartItems.get(productIndex) || 0;
 
@@ -557,7 +573,7 @@ const addProductToCart = (productIndex) => {
   );
 
   cart.count += 1;
-  cart.total += products[productIndex][3];
+  cart.total += Number(product.price);
 
   saveCart();
   updateProductQuantity(productIndex);
@@ -565,6 +581,11 @@ const addProductToCart = (productIndex) => {
 };
 
 const removeProductFromCart = (productIndex) => {
+  const product = products[productIndex];
+  if (!product) {
+    return;
+  }
+
   const currentQuantity =
     cartItems.get(productIndex) || 0;
 
@@ -581,7 +602,7 @@ const removeProductFromCart = (productIndex) => {
   }
 
   cart.count -= 1;
-  cart.total -= products[productIndex][3];
+  cart.total -= Number(product.price);
 
   if (cart.count < 0) {
     cart.count = 0;
@@ -600,6 +621,39 @@ updateAllProductQuantities();
 updateCartHeader();
 updateFavoritesCount();
 renderFavoritesPage();
+
+if (carousel) {
+  carousel.setAttribute('aria-busy', 'true');
+  carousel.innerHTML = '<p class="products-status">Загружаем товары...</p>';
+}
+
+loadProducts()
+  .then(() => {
+    if (carousel) {
+      carousel.setAttribute('aria-busy', 'false');
+      carousel.innerHTML = products.length
+        ? products.map((product, index) => renderProductCard(product, index)).join('')
+        : '<p class="products-status">Товары пока не добавлены.</p>';
+    }
+
+    for (const productIndex of favorites) {
+      if (!products[productIndex]) {
+        favorites.delete(productIndex);
+      }
+    }
+
+    recalculateCart();
+    updateAllProductQuantities();
+    updateCartHeader();
+    renderFavoritesPage();
+  })
+  .catch((error) => {
+    console.error('Не удалось загрузить товары:', error);
+    if (carousel) {
+      carousel.setAttribute('aria-busy', 'false');
+      carousel.innerHTML = '<p class="products-status">Не удалось загрузить товары. Попробуйте обновить страницу.</p>';
+    }
+  });
 
 const productContainers = [carousel, favoritesGrid]
   .filter(Boolean);
