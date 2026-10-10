@@ -11,6 +11,47 @@
     .stores-hero{padding:54px 0 34px;text-align:center}.stores-hero h1{margin:10px 0 0;font-size:clamp(36px,6vw,64px)}.stores-hero p{max-width:720px;margin:16px auto 0;color:var(--muted);font-size:18px}.store-layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(280px,.8fr);gap:24px;padding-bottom:56px}.stores-list{display:grid;gap:16px}.store-card{display:grid;grid-template-columns:70px 1fr auto;gap:18px;align-items:start;padding:22px;background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);transition:.2s}.store-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-large)}.store-icon{width:58px;height:58px;display:grid;place-items:center;color:var(--gold-dark);background:var(--gold-soft);border-radius:16px}.store-icon svg{width:28px;height:28px}.store-name{margin:0;font-family:var(--serif);font-size:22px}.store-address{margin:7px 0 0;color:var(--muted);font-size:15px;line-height:1.5}.store-phone{display:inline-block;margin-top:9px;color:var(--gold-dark);font-weight:700}.store-phone:hover{color:var(--gold)}.store-actions{display:flex;flex-direction:column;gap:8px;min-width:150px}.store-button{display:inline-flex;justify-content:center;padding:10px 14px;color:var(--white);background:var(--gold);border-radius:10px;font-size:13px;font-weight:700;text-align:center}.store-button:hover{background:var(--gold-dark)}.store-button.secondary{color:var(--gold-dark);background:var(--gold-soft)}.store-button.secondary:hover{color:var(--white);background:var(--gold-dark)}.stores-aside{height:max-content;padding:26px;color:#ded3c1;background:#2d2419;border-radius:20px;box-shadow:var(--shadow-large)}.stores-aside h2{color:var(--white);font-size:30px}.stores-aside p{margin:14px 0;color:#ded3c1}.aside-list{display:grid;gap:13px;margin:22px 0 0;padding:0;list-style:none}.aside-list li{display:flex;gap:10px;align-items:flex-start}.aside-list svg{flex:0 0 auto;width:20px;height:20px;color:var(--gold-light)}.transport{margin-top:22px;padding-top:18px;border-top:1px solid rgba(255,255,255,.15)}.store-map{height:300px;margin-top:20px;overflow:hidden;border-radius:14px}.store-map .leaflet-popup-content{color:var(--ink)}.store-map-link{color:var(--gold-dark);font-weight:700}.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px}.filter-button{padding:9px 14px;color:var(--gold-dark);background:var(--gold-soft);border:0;border-radius:999px;cursor:pointer;font-weight:700}.filter-button.active,.filter-button:hover{color:#fff;background:var(--gold)}@media(max-width:850px){.store-layout{grid-template-columns:1fr}.stores-aside{order:-1}}@media(max-width:600px){.stores-hero{padding:36px 0 28px}.stores-hero p{font-size:16px}.store-card{grid-template-columns:48px 1fr}.store-icon{width:46px;height:46px;border-radius:12px}.store-icon svg{width:23px;height:23px}.store-actions{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;min-width:0}.store-name{font-size:20px}}
   </style>
   <style>
+    .stores-header {
+      display: flex !important;
+      justify-content: space-between;
+    }
+
+    .stores-header .brand {
+      order: 0;
+    }
+
+    .stores-header-actions {
+      order: 1;
+      display: flex;
+      align-items: center;
+      margin-left: auto;
+    }
+
+    @media (max-width: 650px) {
+      .stores-header .brand-logo-full {
+        width: 110px !important;
+        max-height: 42px;
+      }
+
+      .stores-header-actions .catalog-button {
+        height: 40px;
+        padding: 0 8px;
+        font-size: 12px;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .stores-header .brand-logo-full {
+        width: 90px !important;
+      }
+
+      .stores-header-actions .catalog-button {
+        padding: 0 6px;
+        font-size: 11px;
+      }
+    }
+  </style>
+  <style>
     .store-layout {
       grid-template-columns: minmax(0, 1.2fr) minmax(380px, 1fr);
     }
@@ -43,13 +84,11 @@
 
   <header class="site-header">
     <div class="container">
-      <div class="header-main">
+      <div class="header-main stores-header">
         <a class="brand" href="./index.html" aria-label="Золотая зебра — главная"><img class="brand-logo-full" src="../images/logo.png" alt="Золотая зебра"></a>
-        <nav class="page-links" aria-label="Основная навигация">
-          <a href="./index.html">Главная</a>
-          <a href="./manufacturers.html">Производители</a>
-          <a class="active" href="./stores.html" aria-current="page">Наши магазины</a>
-        </nav>
+        <div class="stores-header-actions">
+          <a class="catalog-button" href="./index.html#hits">Продолжить покупки</a>
+        </div>
       </div>
     </div>
   </header>

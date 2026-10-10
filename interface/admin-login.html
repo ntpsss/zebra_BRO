@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Вход в админ-панель — Золотая зебра</title>
+  <link rel="stylesheet" href="./style.css">
+  <style>
+    .admin-login-page {
+      display: grid;
+      flex: 1;
+      place-items: center;
+      padding: 40px 16px;
+    }
+
+    .admin-login-card {
+      width: min(100%, 440px);
+      padding: 32px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .admin-login-brand {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+
+    .admin-login-brand img {
+      width: 155px;
+      height: 58px;
+      object-fit: contain;
+    }
+
+    .admin-login-card h1 {
+      margin: 0;
+      font-size: 30px;
+      text-align: center;
+    }
+
+    .admin-login-description {
+      margin: 8px 0 24px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .admin-login-form {
+      display: grid;
+      gap: 16px;
+    }
+
+    .admin-login-field {
+      display: grid;
+      gap: 7px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .admin-login-field input {
+      width: 100%;
+      min-height: 46px;
+      padding: 10px 12px;
+      color: var(--ink);
+      background: #f5f2ed;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      outline: none;
+    }
+
+    .admin-login-field input:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px var(--gold-soft);
+    }
+
+    .admin-login-submit {
+      min-height: 48px;
+      margin-top: 4px;
+      color: var(--white);
+      background: var(--gold);
+      border: 0;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    .admin-login-notice {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .admin-login-back {
+      display: block;
+      margin-top: 20px;
+      color: var(--gold-dark);
+      font-weight: 700;
+      text-align: center;
+    }
+
+    @media (max-width: 480px) {
+      .admin-login-card {
+        padding: 24px 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="admin-login-page">
+    <section class="admin-login-card" aria-labelledby="admin-login-title">
+      <a class="admin-login-brand" href="./index.html" aria-label="Золотая зебра — главная">
+        <img src="../images/logo.png" alt="Золотая зебра">
+      </a>
+      <h1 id="admin-login-title">Вход в админ-панель</h1>
+      <p class="admin-login-description">Войдите, чтобы управлять магазином.</p>
+
+      <form class="admin-login-form">
+        <label class="admin-login-field" for="admin-username">
+          Логин
+          <input
+            id="admin-username"
+            name="username"
+            type="text"
+            autocomplete="username"
+            placeholder="Введите логин"
+            disabled
+          >
+        </label>
+        <label class="admin-login-field" for="admin-password">
+          Пароль
+          <input
+            id="admin-password"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            placeholder="Введите пароль"
+            disabled
+          >
+        </label>
+        <button class="admin-login-submit" type="button" disabled>Войти</button>
+        <p class="admin-login-notice">Авторизация будет подключена позже.</p>
+      </form>
+
+      <a class="admin-login-back" href="./index.html">Вернуться на сайт</a>
+    </section>
+  </main>
+</body>
+</html>
