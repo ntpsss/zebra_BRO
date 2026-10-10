@@ -345,7 +345,7 @@ const renderStars = (rating) => {
 };
 
 const renderProductCard = (
-  [],
+  [name, fileName, oldPrice, newPrice, rating, reviews],
   index
 ) => {
   const discount = Math.round(
