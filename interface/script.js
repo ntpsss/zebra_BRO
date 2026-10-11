@@ -395,11 +395,15 @@ const renderCatalog = () => {
 };
 
 categorySidebar?.addEventListener('click', (event) => {
-  const button = event.target.closest('[data-category]');
+  const button = event.target instanceof Element
+    ? event.target.closest('[data-category]')
+    : null;
   if (!button) {
     return;
   }
 
+  event.preventDefault();
+  event.stopPropagation();
   selectedCatalogCategory = button.dataset.category;
   renderCatalog();
 });
@@ -1226,11 +1230,11 @@ const openLoginButton = $('#open-login');
 
 const loginForm = $('#login-form');
 const registerForm = $('#register-form');
+const loginMessage = $('#login-message');
+const registerMessage = $('#register-message');
 const registerPasswordInput = $('#register-password');
 const registerPasswordConfirmInput = $('#register-password-confirm');
-
-const vkLoginButton = $('#vk-login');
-const yandexLoginButton = $('#yandex-login');
+const authTitle = $('#auth-title');
 
 const openContactButton = $('#open-contact');
 const contactOverlay = $('#contact-overlay');
@@ -1298,12 +1302,13 @@ const openAuthModal = () => {
   authOverlay.classList.remove('hidden');
   authOverlay.setAttribute('aria-hidden', 'false');
   document.body.classList.add('auth-is-open');
+  showLoginView();
 
-  const phoneInput = $('#login-phone');
+  const usernameInput = $('#login-username');
 
-  if (phoneInput) {
+  if (usernameInput) {
     window.setTimeout(() => {
-      phoneInput.focus();
+      usernameInput.focus();
     }, 100);
   }
 };
@@ -1326,6 +1331,13 @@ const showLoginView = () => {
   if (registerView) {
     registerView.hidden = true;
   }
+
+  if (authTitle) {
+    authTitle.textContent = 'Вход';
+  }
+  if (loginMessage) {
+    loginMessage.textContent = '';
+  }
 };
 
 const showRegisterView = () => {
@@ -1335,6 +1347,13 @@ const showRegisterView = () => {
 
   if (registerView) {
     registerView.hidden = false;
+  }
+
+  if (authTitle) {
+    authTitle.textContent = 'Регистрация';
+  }
+  if (registerMessage) {
+    registerMessage.textContent = '';
   }
 };
 
@@ -1379,26 +1398,40 @@ document.addEventListener('keydown', (event) => {
 });
 
 if (loginForm) {
-  loginForm.addEventListener('submit', (event) => {
+  loginForm.addEventListener('submit', async (event) => {
     event.preventDefault();
 
-    const phoneInput = $('#login-phone');
-    const phone = phoneInput.value.trim();
-
-    if (!phone) {
-      return;
+    if (loginMessage) {
+      loginMessage.textContent = '';
     }
 
-    localStorage.setItem(
-      'zebraUser',
-      JSON.stringify({
-        phone,
-        isLoggedIn: true
-      })
-    );
+    try {
+      const username = $('#login-username').value.trim();
+      const account = getSavedAuthAccount(username);
+      const password = $('#login-password').value;
 
-    updateLoginState();
-    closeAuthModal();
+      if (!account || account.username !== normalizeUsername(username)) {
+        throw new Error('Неверный логин или пароль.');
+      }
+
+      const passwordHash = await hashPassword(password, account.salt);
+      if (passwordHash !== account.passwordHash) {
+        throw new Error('Неверный логин или пароль.');
+      }
+
+      localStorage.setItem(
+        'zebraUser',
+        JSON.stringify({ username: account.username, isLoggedIn: true })
+      );
+      updateLoginState();
+      closeAuthModal();
+      loginForm.reset();
+    } catch (error) {
+      if (loginMessage) {
+        loginMessage.textContent = error.message ||
+          'Не удалось выполнить вход. Попробуйте еще раз.';
+      }
+    }
   });
 }
 
@@ -1417,45 +1450,120 @@ if (registerForm) {
   registerPasswordInput?.addEventListener('input', validatePasswordMatch);
   registerPasswordConfirmInput?.addEventListener('input', validatePasswordMatch);
 
-  registerForm.addEventListener('submit', (event) => {
+  registerForm.addEventListener('submit', async (event) => {
     event.preventDefault();
 
-    const nameInput = $('#register-name');
-    const phoneInput = $('#register-phone');
+    if (registerMessage) {
+      registerMessage.textContent = '';
+    }
+
     validatePasswordMatch();
 
-    const user = {
-      name: nameInput.value.trim(),
-      phone: phoneInput.value.trim(),
-      isLoggedIn: true
-    };
+    if (!registerForm.reportValidity()) {
+      return;
+    }
 
-    localStorage.setItem(
-      'zebraUser',
-      JSON.stringify(user)
-    );
+    try {
+      const username = normalizeUsername($('#register-username').value);
+      const email = $('#register-email').value.trim().toLocaleLowerCase('ru-RU');
+      const password = registerPasswordInput.value;
 
-    updateLoginState();
-    closeAuthModal();
-    registerForm.reset();
+      if (getSavedAuthAccount(username)) {
+        throw new Error('Такой логин уже зарегистрирован в этом браузере.');
+      }
+
+      const salt = createPasswordSalt();
+      const passwordHash = await hashPassword(password, salt);
+      localStorage.setItem(
+        `zebraAccount:${encodeURIComponent(username)}`,
+        JSON.stringify({ username, email, salt, passwordHash })
+      );
+      localStorage.setItem(
+        'zebraUser',
+        JSON.stringify({ username, isLoggedIn: true })
+      );
+
+      updateLoginState();
+      closeAuthModal();
+      registerForm.reset();
+    } catch (error) {
+      if (registerMessage) {
+        registerMessage.textContent = error.message ||
+          'Не удалось зарегистрировать аккаунт. Попробуйте еще раз.';
+      }
+    }
   });
 }
 
-if (vkLoginButton) {
-  vkLoginButton.addEventListener('click', () => {
-    alert(
-      'В реальном проекте здесь будет подключение VK ID.'
-    );
-  });
-}
+const AUTH_PASSWORD_ITERATIONS = 120000;
 
-if (yandexLoginButton) {
-  yandexLoginButton.addEventListener('click', () => {
-    alert(
-      'В реальном проекте здесь будет подключение Яндекс ID.'
-    );
-  });
-}
+const normalizeUsername = (username) =>
+  username.trim().toLocaleLowerCase('ru-RU');
+
+const getSavedAuthAccount = (username) => {
+  const accountKey = `zebraAccount:${encodeURIComponent(normalizeUsername(username))}`;
+  const savedAccount = localStorage.getItem(accountKey);
+  if (!savedAccount) {
+    return null;
+  }
+
+  try {
+    const account = JSON.parse(savedAccount);
+    if (
+      typeof account.username === 'string' &&
+      normalizeUsername(account.username) === normalizeUsername(username) &&
+      typeof account.salt === 'string' &&
+      /^[\da-f]{32}$/i.test(account.salt) &&
+      typeof account.passwordHash === 'string' &&
+      /^[\da-f]{64}$/i.test(account.passwordHash)
+    ) {
+      return account;
+    }
+  } catch (error) {
+    throw new Error('Не удалось прочитать сохраненные данные аккаунта.');
+  }
+
+  throw new Error('Сохраненные данные аккаунта повреждены.');
+};
+
+const bytesToHex = (bytes) =>
+  Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+
+const createPasswordSalt = () => {
+  if (!window.crypto?.subtle) {
+    throw new Error('Безопасная регистрация недоступна в этом браузере. Откройте сайт по HTTPS.');
+  }
+
+  const salt = window.crypto.getRandomValues(new Uint8Array(16));
+  return bytesToHex(salt);
+};
+
+const hashPassword = async (password, salt) => {
+  if (!window.crypto?.subtle) {
+    throw new Error('Безопасный вход недоступен в этом браузере. Откройте сайт по HTTPS.');
+  }
+
+  const encoder = new TextEncoder();
+  const keyMaterial = await window.crypto.subtle.importKey(
+    'raw',
+    encoder.encode(password),
+    'PBKDF2',
+    false,
+    ['deriveBits']
+  );
+  const passwordHash = await window.crypto.subtle.deriveBits(
+    {
+      name: 'PBKDF2',
+      salt: Uint8Array.from(salt.match(/.{2}/g), (byte) => parseInt(byte, 16)),
+      iterations: AUTH_PASSWORD_ITERATIONS,
+      hash: 'SHA-256'
+    },
+    keyMaterial,
+    256
+  );
+
+  return bytesToHex(new Uint8Array(passwordHash));
+};
 
 const updateLoginState = () => {
   if (!loginButtonText) {
@@ -1471,10 +1579,11 @@ const updateLoginState = () => {
 
   try {
     const user = JSON.parse(savedUser);
-
-    if (user.isLoggedIn) {
-      loginButtonText.textContent =
-        user.name || 'Профиль';
+    if (user.isLoggedIn && typeof user.username === 'string') {
+      loginButtonText.textContent = user.username;
+    } else {
+      localStorage.removeItem('zebraUser');
+      loginButtonText.textContent = 'Войти';
     }
   } catch (error) {
     localStorage.removeItem('zebraUser');

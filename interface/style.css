@@ -1916,8 +1916,8 @@ body.contact-is-open {
   stroke-width: 2.5;
 }
 
-/* Поле ввода телефона */
-.auth-phone-input {
+/* Поля логина и пароля */
+.auth-input {
   width: 100%;
   height: 52px;
   padding: 0 16px;
@@ -1930,13 +1930,22 @@ body.contact-is-open {
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-.auth-phone-input:focus {
+.auth-input:focus {
   border-color: #d60012;
   box-shadow: 0 0 0 2px rgba(214, 0, 18, 0.15);
 }
 
-.auth-phone-input::placeholder {
+.auth-input::placeholder {
   color: #9c9c9c;
+}
+
+#login-form {
+  display: grid;
+  gap: 12px;
+}
+
+#login-form .auth-btn-primary {
+  margin-top: 6px;
 }
 
 /* Кнопка "Войти" */
@@ -1962,109 +1971,16 @@ body.contact-is-open {
   transform: scale(0.99);
 }
 
-/* Разделитель "или" */
-.auth-divider {
-  margin: 16px 0;
-  color: #4a4a4a;
-  font-size: 15px;
+.auth-message {
+  min-height: 0;
+  margin: 0;
+  color: #bd0010;
+  font-size: 13px;
   text-align: center;
 }
 
-/* Социальные кнопки */
-.auth-socials {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* Кнопка VK */
-.auth-btn-vk {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-  height: 50px;
-  color: #ffffff;
-  font-size: 16px;
-  font-weight: 500;
-  background-color: #0077ff;
-  border: 0;
-  border-radius: 25px;
-  cursor: pointer;
-  transition: background-color 0.15s;
-}
-
-.auth-btn-vk:hover {
-  background-color: #0066dc;
-}
-
-.auth-vk-icon {
-  width: 24px;
-  height: 24px;
-}
-
-/* Кнопка Яндекс */
-.auth-btn-ya {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 50px;
-  padding: 0 10px;
-  color: #ffffff;
-  font-size: 16px;
-  font-weight: 500;
-  background-color: #000000;
-  border: 0;
-  border-radius: 25px;
-  cursor: pointer;
-  transition: background-color 0.15s;
-}
-
-.auth-btn-ya:hover {
-  background-color: #1f1f1f;
-}
-
-.ya-badge {
-  position: absolute;
-  left: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  color: #ffffff;
-  font-size: 19px;
-  font-weight: 700;
-  background-color: #fc3f1d;
-  border-radius: 50%;
-}
-
-.ya-text {
-  flex: 1;
-  text-align: center;
-}
-
-.ya-avatar {
-  position: absolute;
-  right: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  border: 2px solid #8e52f5;
-  background-color: #1a1a1a;
-}
-
-.ya-avatar svg {
-  width: 20px;
-  height: 20px;
-  stroke: #ffffff;
+.auth-message:empty {
+  display: none;
 }
 
 /* Соглашение и политика */
