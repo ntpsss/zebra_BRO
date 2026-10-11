@@ -139,6 +139,8 @@ function renderProducts() {
       'Без категории';
     const image = product.image || product.imageUrl || product.image_url || '../images/fallback.png';
     const price = Number(product.price);
+    const oldPrice = Number(product.oldPrice ?? product.old_price);
+    const hasDiscount = Number.isFinite(oldPrice) && oldPrice > price;
     const formattedPrice = Number.isFinite(price)
       ? `${price.toLocaleString('ru-RU')} ₽`
       : 'Цена не указана';
@@ -160,20 +162,34 @@ function renderProducts() {
         </p>
 
         <div class="admin-product-bottom">
-          <span class="admin-product-price">${formattedPrice}</span>
+          <div class="admin-product-price-row">
+            <span class="admin-product-price">${formattedPrice}</span>
+            ${hasDiscount
+              ? `<span class="admin-product-old-price">${oldPrice.toLocaleString('ru-RU')} ₽</span>`
+              : ''}
+          </div>
           <span class="admin-product-stock">
             На складе: ${escapeHTML(product.stock ?? '—')}
           </span>
         </div>
 
-        <button
-          class="admin-product-delete"
-          type="button"
-          data-delete-product="${escapeHTML(product.id)}"
-          aria-label="Удалить товар ${escapeHTML(product.name)}"
-        >
-          Удалить товар
-        </button>
+        <div class="admin-product-actions">
+          <button
+            class="admin-product-edit"
+            type="button"
+            data-edit-product="${escapeHTML(product.id)}"
+          >
+            Изменить
+          </button>
+          <button
+            class="admin-product-delete"
+            type="button"
+            data-delete-product="${escapeHTML(product.id)}"
+            aria-label="Удалить товар ${escapeHTML(product.name)}"
+          >
+            Удалить
+          </button>
+        </div>
       </article>
     `;
   }).join('');
@@ -316,6 +332,7 @@ function fillProductForm(product) {
   form.elements.productId.value = product.id;
   form.elements.name.value = product.name ?? '';
   form.elements.price.value = product.price ?? '';
+  form.elements.oldPrice.value = product.oldPrice ?? product.old_price ?? '';
   form.elements.categoryId.value = product.categoryId ?? product.category_id ?? '';
   form.elements.image.value = product.imageUrl || product.image_url || '';
 
@@ -328,17 +345,14 @@ function fillProductForm(product) {
   showMessage(document.querySelector('#edit-product-image-message'), '');
   document.querySelector('#edit-product-image-file').value = '';
   panels.editProduct.hidden = false;
-  panels.productTarget.hidden = true;
-  panels.editProduct.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function fillCategoryForm(category) {
   const form = document.querySelector('#edit-category-form');
   form.elements.categoryId.value = category.id;
+  form.elements.oldName.value = category.name ?? '';
   form.elements.name.value = category.name ?? '';
   panels.editCategory.hidden = false;
-  panels.categoryTarget.hidden = true;
-  panels.editCategory.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 actionSelect?.addEventListener('change', () => {
@@ -353,20 +367,16 @@ actionSelect?.addEventListener('change', () => {
       '#product-image-message'
     );
     panels.addProduct.hidden = false;
-    panels.addProduct.scrollIntoView({ behavior: 'smooth', block: 'start' });
   } else if (action === 'add-category') {
     document.querySelector('#category-form').reset();
     showMessage(document.querySelector('#category-form-message'), '');
     panels.addCategory.hidden = false;
-    panels.addCategory.scrollIntoView({ behavior: 'smooth', block: 'start' });
   } else if (action === 'edit-product') {
     panels.productTarget.hidden = false;
     productTargetSelect.value = '';
-    panels.productTarget.scrollIntoView({ behavior: 'smooth', block: 'start' });
   } else if (action === 'edit-category') {
     panels.categoryTarget.hidden = false;
     categoryTargetSelect.value = '';
-    panels.categoryTarget.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 });
 
@@ -417,9 +427,27 @@ async function submitProductForm(form, isEdit) {
 
   const name = String(data.get('name') ?? '').trim();
   const price = Number(data.get('price'));
+  const oldPriceValue = String(data.get('oldPrice') ?? '').trim();
+  const oldPrice = oldPriceValue ? Number(oldPriceValue) : null;
   const categoryId = Number(data.get('categoryId'));
   const id = isEdit ? Number(data.get('productId')) : null;
   const payload = { name, price, categoryId };
+
+  if (isEdit) {
+    if (
+      oldPrice !== null &&
+      (!Number.isFinite(oldPrice) || oldPrice <= price)
+    ) {
+      showMessage(
+        document.querySelector('#edit-product-message'),
+        'Цена без скидки должна быть больше цены со скидкой.',
+        'error'
+      );
+      return;
+    }
+    payload.oldPrice = oldPrice;
+  }
+
   const imageUrl = String(data.get('image') ?? '').trim();
 
   if (!file && imageUrl) {
@@ -435,6 +463,9 @@ async function submitProductForm(form, isEdit) {
     uploadData.append('name', name);
     uploadData.append('price', String(price));
     uploadData.append('categoryId', String(categoryId));
+    if (isEdit) {
+      uploadData.append('oldPrice', oldPrice === null ? '' : String(oldPrice));
+    }
     uploadData.append('imageFile', file);
     options.body = uploadData;
   } else {
@@ -537,8 +568,40 @@ document.querySelector('#edit-category-form')?.addEventListener('submit', async 
   }
 });
 
-list?.addEventListener('click', async (event) => {
+const deleteConfirmation = document.querySelector('#delete-confirmation');
+const deleteConfirmationProduct = document.querySelector(
+  '#delete-confirmation-product'
+);
+const deleteConfirmationError = document.querySelector(
+  '#delete-confirmation-error'
+);
+const deleteConfirmationCancel = document.querySelector(
+  '#delete-confirmation-cancel'
+);
+const deleteConfirmationSubmit = document.querySelector(
+  '#delete-confirmation-submit'
+);
+let pendingDeleteProduct = null;
+
+list?.addEventListener('click', (event) => {
   if (!(event.target instanceof Element)) {
+    return;
+  }
+
+  const editButton = event.target.closest('[data-edit-product]');
+  if (editButton) {
+    const product = products.find(
+      (item) => String(item.id) === editButton.dataset.editProduct
+    );
+    if (product) {
+      hideActionPanels();
+      if (actionSelect) {
+        actionSelect.value = 'edit-product';
+      }
+      panels.productTarget.hidden = false;
+      productTargetSelect.value = String(product.id);
+      fillProductForm(product);
+    }
     return;
   }
 
@@ -550,24 +613,73 @@ list?.addEventListener('click', async (event) => {
   const product = products.find(
     (item) => String(item.id) === deleteButton.dataset.deleteProduct
   );
-  if (!product || !window.confirm(`Удалить товар «${product.name}»?`)) {
+  if (
+    !product ||
+    !deleteConfirmation ||
+    !deleteConfirmationProduct ||
+    !deleteConfirmationError
+  ) {
     return;
   }
 
-  const message = document.querySelector('#products-message');
-  deleteButton.disabled = true;
-  deleteButton.textContent = 'Удаляем...';
+  pendingDeleteProduct = product;
+  deleteConfirmationProduct.textContent = `«${product.name}»`;
+  deleteConfirmationError.hidden = true;
+  deleteConfirmationError.textContent = '';
+  deleteConfirmation.showModal();
+});
+
+deleteConfirmationCancel?.addEventListener('click', () => {
+  deleteConfirmation?.close();
+});
+
+deleteConfirmation?.addEventListener('cancel', (event) => {
+  if (deleteConfirmationSubmit?.disabled) {
+    event.preventDefault();
+  }
+});
+
+deleteConfirmation?.addEventListener('close', () => {
+  pendingDeleteProduct = null;
+});
+
+deleteConfirmationSubmit?.addEventListener('click', async () => {
+  const product = pendingDeleteProduct;
+  if (
+    !product ||
+    !deleteConfirmationSubmit ||
+    !deleteConfirmationCancel ||
+    !deleteConfirmationError
+  ) {
+    return;
+  }
+
+  deleteConfirmationSubmit.disabled = true;
+  deleteConfirmationCancel.disabled = true;
+  deleteConfirmationSubmit.textContent = 'Удаляем...';
+  deleteConfirmationError.hidden = true;
+  deleteConfirmationError.textContent = '';
+
   try {
     await request(`/products/${encodeURIComponent(product.id)}`, {
       method: 'DELETE',
     });
     await loadProducts();
-    showMessage(message, `Товар «${product.name}» удалён.`, 'success');
+    showMessage(
+      document.querySelector('#products-message'),
+      `Товар «${product.name}» удалён.`,
+      'success'
+    );
+    deleteConfirmation?.close();
   } catch (error) {
     console.error('Не удалось удалить товар:', error);
-    showMessage(message, `Не удалось удалить товар. ${error.message}`, 'error');
-    deleteButton.disabled = false;
-    deleteButton.textContent = 'Удалить товар';
+    deleteConfirmationError.textContent =
+      `Не удалось удалить товар. ${error.message}`;
+    deleteConfirmationError.hidden = false;
+  } finally {
+    deleteConfirmationSubmit.disabled = false;
+    deleteConfirmationCancel.disabled = false;
+    deleteConfirmationSubmit.textContent = 'Удалить';
   }
 });
 

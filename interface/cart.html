@@ -9,6 +9,23 @@
   <link rel="stylesheet" href="./style.css">
 
   <style>
+    .cart-header {
+      display: flex !important;
+      justify-content: space-between;
+    }
+
+    .cart-header .brand {
+      order: 0;
+    }
+
+    .cart-header-actions {
+      order: 1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: auto;
+    }
+
     .cart-page {
       padding: 42px 0 70px;
     }
@@ -243,14 +260,42 @@
         font-size: 15px;
       }
     }
+
+    @media (max-width: 650px) {
+      .cart-header .brand-logo-full {
+        width: 100px !important;
+        max-height: 42px;
+      }
+
+      .cart-header-actions {
+        gap: 6px;
+      }
+
+      .cart-header-actions .catalog-button {
+        height: 40px;
+        padding: 0 7px;
+        font-size: 11px;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .cart-header .brand-logo-full {
+        width: 80px !important;
+      }
+
+      .cart-header-actions .catalog-button {
+        padding: 0 5px;
+        font-size: 10px;
+      }
+    }
   </style>
 </head>
 
 <body>
   <header class="site-header">
     <div class="container">
-      <div class="header-main">
-        <a class="brand" href="./index.html">
+      <div class="header-main cart-header">
+        <a class="brand" href="./index.html" aria-label="Золотая зебра — главная">
           <img
             class="brand-logo-full"
             src="../images/logo.png"
@@ -258,12 +303,14 @@
           >
         </a>
 
-        <a
-          class="catalog-button"
-          href="./index.html#hits"
-        >
-          Продолжить покупки
-        </a>
+        <div class="cart-header-actions">
+          <a class="catalog-button" href="./index.html#hits">
+            Продолжить покупки
+          </a>
+          <a class="catalog-button" href="./favorites.html">
+            Избранное
+          </a>
+        </div>
       </div>
     </div>
   </header>
@@ -272,59 +319,31 @@
     <div class="container">
       <h1>Корзина</h1>
 
-      <div id="cart-page-content"></div>
+      <div id="cart-page-content" aria-live="polite" aria-busy="true">
+        <p class="products-status">Загружаем корзину...</p>
+      </div>
     </div>
   </main>
  <div id="footer-container"></div>
   <script>
-    const products = [
-      [
-        'Диван «Зебра»',
-        'sofa.png',
-        89990,
-        62990
-      ],
-      [
-        'Кровать «Аристократ» 160×200',
-        'bed.png',
-        74990,
-        52490
-      ],
-      [
-        'Кресло «Адель»',
-        'chair.png',
-        29990,
-        20990
-      ],
-      [
-        'Стул «Золотой»',
-        'chair-gold.png',
-        8990,
-        6290
-      ],
-      [
-        'Шкаф «Версаль»',
-        'wardrobe.png',
-        109990,
-        76990
-      ],
-      [
-        'Кухня «Модерн»',
-        'kitchen.png',
-        189990,
-        132990
-      ],
-      [
-        'Торшер «Шампань»',
-        'lamp.png',
-        15990,
-        11190
-      ]
-    ];
-
+    const API_URL = 'https://server-zebrabro.onrender.com/api';
+    let products = [];
     const content = document.querySelector(
       '#cart-page-content'
     );
+
+    const escapeHTML = (value) => {
+      return String(value ?? '').replace(
+        /[&<>"']/g,
+        (character) => ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        })[character]
+      );
+    };
 
     const formatPrice = (price) => {
       return `${price.toLocaleString('ru-RU')} ₽`;
@@ -358,7 +377,7 @@
           }
 
           count += quantity;
-          total += product[3] * quantity;
+          total += Number(product.price) * quantity;
         }
       );
 
@@ -370,18 +389,27 @@
 
     const renderUndoNotice = () => {
       return Array.from(removedProducts.entries())
-        .map(([index]) => `
+        .map(([index]) => {
+          const product = products[index];
+          if (!product) {
+            return '';
+          }
+
+          return `
           <div class="cart-undo" role="status" aria-live="polite">
-            <span>${products[index][0]} удалён из корзины.</span>
+            <span>${escapeHTML(product.name)} удалён из корзины.</span>
             <button data-restore="${index}" type="button">Вернуть</button>
           </div>
-        `)
+        `;
+        })
         .join('');
     };
 
     const render = () => {
       const entries = Object.entries(cart)
-        .filter(([, quantity]) => quantity > 0);
+        .filter(([index, quantity]) =>
+          products[Number(index)] && Number(quantity) > 0
+        );
 
       if (entries.length === 0) {
         content.innerHTML = `
@@ -409,6 +437,11 @@
         .map(([key, quantity]) => {
           const index = Number(key);
           const product = products[index];
+          const image = product.image ||
+            product.imageUrl ||
+            product.image_url ||
+            '../images/fallback.png';
+          const price = Number(product.price);
 
           return `
             <article
@@ -417,19 +450,19 @@
             >
               <div class="cart-item-image">
                 <img
-                  src="../images/${product[1]}"
-                  alt="${product[0]}"
+                  src="${escapeHTML(image)}"
+                  alt="${escapeHTML(product.name)}"
                   onerror="this.onerror=null; this.src='../images/fallback.png'"
                 >
               </div>
 
               <div>
                 <h2 class="cart-item-title">
-                  ${product[0]}
+                  ${escapeHTML(product.name)}
                 </h2>
 
                 <div class="cart-item-price">
-                  ${formatPrice(product[3])}
+                  ${formatPrice(price)}
                 </div>
               </div>
 
@@ -571,7 +604,50 @@
       }
     });
 
-    render();
+    const loadProducts = async () => {
+      try {
+        const response = await fetch(`${API_URL}/products`);
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            typeof result?.message === 'string'
+              ? result.message
+              : `Сервер вернул ошибку ${response.status}.`
+          );
+        }
+
+        if (!Array.isArray(result)) {
+          throw new Error('Сервер вернул некорректный список товаров.');
+        }
+
+        products = result;
+        content.setAttribute('aria-busy', 'false');
+        render();
+      } catch (error) {
+        console.error('Не удалось загрузить товары корзины:', error);
+        content.setAttribute('aria-busy', 'false');
+        content.innerHTML = `
+          <div class="empty-cart" role="alert">
+            <h2>Не удалось загрузить корзину</h2>
+            <p>${escapeHTML(error.message)}</p>
+            <button class="catalog-button" type="button" id="retry-cart-load">
+              Попробовать ещё раз
+            </button>
+          </div>
+        `;
+      }
+    };
+
+    content.addEventListener('click', (event) => {
+      if (event.target.closest('#retry-cart-load')) {
+        content.setAttribute('aria-busy', 'true');
+        content.innerHTML = '<p class="products-status">Загружаем корзину...</p>';
+        loadProducts();
+      }
+    });
+
+    loadProducts();
   </script>
   <footer class="site-footer">
     <div class="copyright">© 2026 «Золотая зебра». Все права защищены.</div>

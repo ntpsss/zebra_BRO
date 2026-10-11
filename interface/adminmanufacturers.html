@@ -9,6 +9,46 @@
   <link rel="stylesheet" href="./style.css">
 
   <style>
+    .admin-header-main {
+      display: flex !important;
+      justify-content: space-between;
+    }
+
+    .admin-header-main .brand {
+      order: 0;
+    }
+
+    .admin-header-actions {
+      order: 1;
+      display: flex;
+      align-items: center;
+      margin-left: auto;
+    }
+
+    @media (max-width: 650px) {
+      .admin-header-main .brand-logo-full {
+        width: 110px !important;
+        max-height: 42px;
+      }
+
+      .admin-header-actions .catalog-button {
+        height: 40px;
+        padding: 0 8px;
+        font-size: 12px;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .admin-header-main .brand-logo-full {
+        width: 90px !important;
+      }
+
+      .admin-header-actions .catalog-button {
+        padding: 0 6px;
+        font-size: 11px;
+      }
+    }
+
     .admin-header {
       padding: 48px 0 32px;
       text-align: left;
@@ -35,6 +75,35 @@
       border: 1px solid var(--border);
       border-radius: 16px;
       box-shadow: var(--shadow);
+    }
+
+    .admin-edit-panels {
+      padding-bottom: 1px;
+    }
+
+    .admin-edit-pair {
+      display: grid;
+      grid-template-columns: minmax(240px, 0.32fr) minmax(0, 1fr);
+      align-items: start;
+      gap: 24px;
+    }
+
+    .admin-edit-pair .admin-action-target {
+      width: auto;
+      max-width: none;
+      margin: 0;
+    }
+
+    .admin-edit-pair .admin-form:not(.admin-action-target) {
+      width: 100%;
+      max-width: none;
+      margin: 0 0 24px;
+    }
+
+    #edit-product-panel {
+      max-width: 1140px;
+      margin-right: auto;
+      margin-left: auto;
     }
 
     .admin-form h2 {
@@ -64,6 +133,8 @@
 
     .admin-action-target {
       max-width: 760px;
+      margin-right: auto;
+      margin-left: auto;
       margin-bottom: 20px;
     }
 
@@ -307,20 +378,53 @@
       font-weight: 800;
     }
 
+    .admin-product-price-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .admin-product-old-price {
+      color: var(--muted);
+      font-size: 13px;
+      text-decoration: line-through;
+    }
+
+    .admin-product-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .admin-product-edit,
     .admin-product-stock {
       color: var(--muted);
       font-size: 12px;
     }
 
+    .admin-product-edit,
     .admin-product-delete {
-      width: 100%;
-      margin-top: 12px;
       padding: 9px 12px;
+      border-radius: 9px;
+      font-weight: 700;
+    }
+
+    .admin-product-edit {
+      color: var(--gold-dark);
+      background: var(--gold-soft);
+      border: 1px solid var(--border);
+    }
+
+    .admin-product-edit:hover:not(:disabled) {
+      background: var(--gold-light);
+    }
+
+    .admin-product-delete {
       color: #925342;
       background: #fbf3ef;
       border: 1px solid #efddd5;
-      border-radius: 9px;
-      font-weight: 700;
       transition: background .2s, border-color .2s, color .2s;
     }
 
@@ -364,6 +468,75 @@
       text-align: center;
     }
 
+    .delete-confirmation {
+      width: min(calc(100% - 32px), 440px);
+      padding: 28px;
+      color: var(--ink);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow-large);
+    }
+
+    .delete-confirmation::backdrop {
+      background: rgba(35, 28, 18, 0.55);
+      backdrop-filter: blur(3px);
+    }
+
+    .delete-confirmation h2 {
+      margin: 0;
+      font-size: 25px;
+    }
+
+    .delete-confirmation p {
+      margin: 12px 0 0;
+      color: var(--muted);
+    }
+
+    .delete-confirmation-product {
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .delete-confirmation-error {
+      color: #a34332 !important;
+    }
+
+    .delete-confirmation-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .delete-confirmation-actions button {
+      min-height: 42px;
+      padding: 0 16px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-weight: 700;
+    }
+
+    .delete-confirmation-cancel {
+      color: var(--ink);
+      background: var(--surface);
+    }
+
+    .delete-confirmation-submit {
+      color: var(--white);
+      background: #a34332;
+      border-color: #a34332 !important;
+    }
+
+    .delete-confirmation-submit:hover:not(:disabled) {
+      background: #873628;
+    }
+
+    .delete-confirmation-actions button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+    }
+
     /* Адаптив */
 
     @media (max-width: 900px) {
@@ -389,6 +562,16 @@
         grid-template-columns: 1fr;
       }
 
+    }
+
+    @media (max-width: 900px) {
+      .admin-edit-pair {
+        grid-template-columns: 1fr;
+        gap: 0;
+      }
+    }
+
+    @media (max-width: 600px) {
       .form-field.full {
         grid-column: auto;
       }
@@ -419,17 +602,15 @@
 <header class="site-header">
   <div class="container">
 
-    <div class="header-main">
+    <div class="header-main admin-header-main">
 
       <a class="brand" href="./index.html">
         <img class="brand-logo-full" src="../images/logo.png" alt="Золотая зебра">
       </a>
 
-      <nav class="page-links" aria-label="Основная навигация">
-        <a href="./index.html">Главная</a>
-        <a href="./manufacturers.html">Производители</a>
-        <a class="active" href="./adminmanufacturers.html">Админ-панель</a>
-      </nav>
+      <div class="admin-header-actions">
+        <a class="catalog-button" href="./index.html#hits">Перейти на сайт</a>
+      </div>
 
     </div>
 
@@ -474,24 +655,6 @@
           <option value="add-category">Добавить категорию</option>
           <option value="edit-product">Изменить товар</option>
           <option value="edit-category">Изменить категорию</option>
-        </select>
-      </div>
-    </section>
-
-    <section class="admin-form admin-action-target" id="product-target-panel" hidden>
-      <div class="form-field">
-        <label for="action-product-select">Выберите товар для изменения</label>
-        <select id="action-product-select">
-          <option value="">Сначала загрузите товары</option>
-        </select>
-      </div>
-    </section>
-
-    <section class="admin-form admin-action-target" id="category-target-panel" hidden>
-      <div class="form-field">
-        <label for="action-category-select">Выберите категорию для изменения</label>
-        <select id="action-category-select">
-          <option value="">Сначала загрузите категории</option>
         </select>
       </div>
     </section>
@@ -709,9 +872,18 @@
 
 </section>
 
-   
-
   </div>
+  <div class="container admin-edit-panels">
+    <div class="admin-edit-pair">
+    <section class="admin-form admin-action-target" id="product-target-panel" hidden>
+      <div class="form-field">
+        <label for="action-product-select">Выберите товар для изменения</label>
+        <select id="action-product-select">
+          <option value="">Сначала загрузите товары</option>
+        </select>
+      </div>
+    </section>
+
     <!-- ИЗМЕНЕНИЕ ТОВАРА -->
 <section class="admin-form" id="edit-product-panel" hidden>
     <div class="admin-form-heading">
@@ -742,17 +914,31 @@
             </div>
 
             <div class="form-field">
-                <label for="edit-product-price">
-                    Цена
-                </label>
+              <label for="edit-product-price">Цена со скидкой</label>
+              <input
+                id="edit-product-price"
+                name="price"
+                type="number"
+                min="0"
+                step="1"
+                required
+              >
+            </div>
 
-                <input
-                    id="edit-product-price"
-                    name="price"
-                    type="number"
-                    min="0"
-                    required
-                >
+            <div class="form-field">
+              <label for="edit-product-old-price">Цена без скидки</label>
+              <input
+                id="edit-product-old-price"
+                name="oldPrice"
+                type="number"
+                min="0"
+                step="1"
+                placeholder="Оставьте пустым без скидки"
+                aria-describedby="edit-product-old-price-hint"
+              >
+              <p class="image-upload-hint" id="edit-product-old-price-hint">
+                Укажите цену выше цены со скидкой, чтобы показать скидку в каталоге.
+              </p>
             </div>
 
             <div class="form-field">
@@ -816,7 +1002,17 @@
 
     </form>
 </section>
+    </div>
 
+    <div class="admin-edit-pair">
+      <section class="admin-form admin-action-target" id="category-target-panel" hidden>
+        <div class="form-field">
+          <label for="action-category-select">Выберите категорию для изменения</label>
+          <select id="action-category-select">
+            <option value="">Сначала загрузите категории</option>
+          </select>
+        </div>
+      </section>
 
 <!-- ИЗМЕНЕНИЕ КАТЕГОРИИ -->
 <section class="admin-form" id="edit-category-panel" hidden>
@@ -832,10 +1028,17 @@
         <input id="edit-category-id" name="categoryId" type="hidden">
 
         <div class="form-field">
-            <label for="edit-category-name">
-                Новое название
-            </label>
+            <label for="edit-category-old-name">Старое название</label>
+            <input
+                id="edit-category-old-name"
+                name="oldName"
+                type="text"
+                readonly
+            >
+        </div>
 
+        <div class="form-field">
+            <label for="edit-category-name">Новое название</label>
             <input
                 id="edit-category-name"
                 name="name"
@@ -859,6 +1062,8 @@
 
     </form>
 </section>
+    </div>
+  </div>
 </main>
 
  <div class="container">
@@ -884,6 +1089,41 @@
   </div>
 
 </footer>
+<dialog
+  class="delete-confirmation"
+  id="delete-confirmation"
+  aria-labelledby="delete-confirmation-title"
+  aria-describedby="delete-confirmation-description"
+>
+  <h2 id="delete-confirmation-title">Удалить товар?</h2>
+  <p id="delete-confirmation-description">
+    Вы уверены, что хотите удалить товар
+    <span class="delete-confirmation-product" id="delete-confirmation-product"></span>?
+    Это действие нельзя отменить.
+  </p>
+  <p
+    class="delete-confirmation-error"
+    id="delete-confirmation-error"
+    role="alert"
+    hidden
+  ></p>
+  <div class="delete-confirmation-actions">
+    <button
+      class="delete-confirmation-cancel"
+      id="delete-confirmation-cancel"
+      type="button"
+    >
+      Отмена
+    </button>
+    <button
+      class="delete-confirmation-submit"
+      id="delete-confirmation-submit"
+      type="button"
+    >
+      Удалить
+    </button>
+  </div>
+</dialog>
 <script src="/logic/admin_panel.js"></script>
 </body>
 </html>
