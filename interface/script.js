@@ -7,7 +7,6 @@ const ALLOWED_IMAGE_TYPES = new Set([
 ]);
 let products = [];
 let categories = [];
-let client;
 const imagePreviewUrls = new WeakMap();
 
 function escapeHTML(value) {
@@ -1237,32 +1236,32 @@ const registerPasswordInput = $('#register-password');
 const registerPasswordConfirmInput = $('#register-password-confirm');
 const authTitle = $('#auth-title');
 
+authOverlay?.addEventListener('click', (event) => {
+  const toggle = event.target.closest('[data-password-toggle]');
+  if (!toggle) {
+    return;
+  }
+
+  const passwordInput = document.getElementById(toggle.getAttribute('aria-controls'));
+  if (!passwordInput) {
+    return;
+  }
+
+  const isVisible = passwordInput.type === 'password';
+  passwordInput.type = isVisible ? 'text' : 'password';
+  toggle.setAttribute('aria-pressed', String(isVisible));
+  toggle.setAttribute(
+    'aria-label',
+    isVisible ? 'Скрыть пароль' : 'Показать пароль'
+  );
+});
+
 const openContactButton = $('#open-contact');
 const contactOverlay = $('#contact-overlay');
 const contactCloseButton = $('#contact-close');
 const contactForm = $('#contact-form');
 const contactNameInput = $('#contact-name');
 const contactSubmitNote = $('#contact-submit-note');
-const clientName = document.querySelector('#login-button-text');
-
-loginForm.addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const data = new FormData(loginForm);
-  const phone_number = data.get('phone_number').trim();
-  try {
-    await request(`/clients/${phone_number}`, {
-      method: 'GET',
-      headers: {'Content-Type': 'application/json'}
-    });
-    const result = await request(`/clients/${phone_number}`);
-    client = result;
-    clientName.textContent = client.name;
-  } catch (error) {
-    console.log('Ошибка:', error);
-  }
-});
-
-
 
 const openContactModal = () => {
   if (!contactOverlay) {
@@ -1426,23 +1425,29 @@ if (loginForm) {
       loginMessage.textContent = '';
     }
 
+    const submitButton = loginForm.querySelector('[type="submit"]');
+    if (submitButton) {
+      submitButton.disabled = true;
+    }
+
     try {
-      const username = $('#login-username').value.trim();
-      const account = getSavedAuthAccount(username);
+      const username = normalizeUsername($('#login-username').value);
       const password = $('#login-password').value;
-
-      if (!account || account.username !== normalizeUsername(username)) {
-        throw new Error('Неверный логин или пароль.');
-      }
-
-      const passwordHash = await hashPassword(password, account.salt);
-      if (passwordHash !== account.passwordHash) {
-        throw new Error('Неверный логин или пароль.');
-      }
+      const result = await request('/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const authenticatedUsername =
+        typeof result?.user?.username === 'string'
+          ? result.user.username
+          : typeof result?.username === 'string'
+            ? result.username
+            : username;
 
       localStorage.setItem(
         'zebraUser',
-        JSON.stringify({ username: account.username, isLoggedIn: true })
+        JSON.stringify({ username: authenticatedUsername, isLoggedIn: true })
       );
       updateLoginState();
       closeAuthModal();
@@ -1451,6 +1456,10 @@ if (loginForm) {
       if (loginMessage) {
         loginMessage.textContent = error.message ||
           'Не удалось выполнить вход. Попробуйте еще раз.';
+      }
+    } finally {
+      if (submitButton) {
+        submitButton.disabled = false;
       }
     }
   });
@@ -1484,24 +1493,30 @@ if (registerForm) {
       return;
     }
 
+    const submitButton = registerForm.querySelector('[type="submit"]');
+    if (submitButton) {
+      submitButton.disabled = true;
+    }
+
     try {
       const username = normalizeUsername($('#register-username').value);
       const email = $('#register-email').value.trim().toLocaleLowerCase('ru-RU');
       const password = registerPasswordInput.value;
+      const result = await request('/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, email, password })
+      });
+      const registeredUsername =
+        typeof result?.user?.username === 'string'
+          ? result.user.username
+          : typeof result?.username === 'string'
+            ? result.username
+            : username;
 
-      if (getSavedAuthAccount(username)) {
-        throw new Error('Такой логин уже зарегистрирован в этом браузере.');
-      }
-
-      const salt = createPasswordSalt();
-      const passwordHash = await hashPassword(password, salt);
-      localStorage.setItem(
-        `zebraAccount:${encodeURIComponent(username)}`,
-        JSON.stringify({ username, email, salt, passwordHash })
-      );
       localStorage.setItem(
         'zebraUser',
-        JSON.stringify({ username, isLoggedIn: true })
+        JSON.stringify({ username: registeredUsername, isLoggedIn: true })
       );
 
       updateLoginState();
@@ -1512,79 +1527,16 @@ if (registerForm) {
         registerMessage.textContent = error.message ||
           'Не удалось зарегистрировать аккаунт. Попробуйте еще раз.';
       }
+    } finally {
+      if (submitButton) {
+        submitButton.disabled = false;
+      }
     }
   });
 }
 
-const AUTH_PASSWORD_ITERATIONS = 120000;
-
 const normalizeUsername = (username) =>
   username.trim().toLocaleLowerCase('ru-RU');
-
-const getSavedAuthAccount = (username) => {
-  const accountKey = `zebraAccount:${encodeURIComponent(normalizeUsername(username))}`;
-  const savedAccount = localStorage.getItem(accountKey);
-  if (!savedAccount) {
-    return null;
-  }
-
-  try {
-    const account = JSON.parse(savedAccount);
-    if (
-      typeof account.username === 'string' &&
-      normalizeUsername(account.username) === normalizeUsername(username) &&
-      typeof account.salt === 'string' &&
-      /^[\da-f]{32}$/i.test(account.salt) &&
-      typeof account.passwordHash === 'string' &&
-      /^[\da-f]{64}$/i.test(account.passwordHash)
-    ) {
-      return account;
-    }
-  } catch (error) {
-    throw new Error('Не удалось прочитать сохраненные данные аккаунта.');
-  }
-
-  throw new Error('Сохраненные данные аккаунта повреждены.');
-};
-
-const bytesToHex = (bytes) =>
-  Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
-
-const createPasswordSalt = () => {
-  if (!window.crypto?.subtle) {
-    throw new Error('Безопасная регистрация недоступна в этом браузере. Откройте сайт по HTTPS.');
-  }
-
-  const salt = window.crypto.getRandomValues(new Uint8Array(16));
-  return bytesToHex(salt);
-};
-
-const hashPassword = async (password, salt) => {
-  if (!window.crypto?.subtle) {
-    throw new Error('Безопасный вход недоступен в этом браузере. Откройте сайт по HTTPS.');
-  }
-
-  const encoder = new TextEncoder();
-  const keyMaterial = await window.crypto.subtle.importKey(
-    'raw',
-    encoder.encode(password),
-    'PBKDF2',
-    false,
-    ['deriveBits']
-  );
-  const passwordHash = await window.crypto.subtle.deriveBits(
-    {
-      name: 'PBKDF2',
-      salt: Uint8Array.from(salt.match(/.{2}/g), (byte) => parseInt(byte, 16)),
-      iterations: AUTH_PASSWORD_ITERATIONS,
-      hash: 'SHA-256'
-    },
-    keyMaterial,
-    256
-  );
-
-  return bytesToHex(new Uint8Array(passwordHash));
-};
 
 const updateLoginState = () => {
   if (!loginButtonText) {
