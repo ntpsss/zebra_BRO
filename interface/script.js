@@ -1248,20 +1248,55 @@ const clientName = document.querySelector('#login-button-text');
 loginForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   const data = new FormData(loginForm);
-  const phone_number = data.get('phone_number').trim();
+  const username = data.get('username').trim();
+  const userpassword = data.get('password').trim();
+  const datalogin = {
+    name: username,
+    password: userpassword,
+    registration: false
+  };
   try {
-    await request(`/clients/${phone_number}`, {
-      method: 'GET',
-      headers: {'Content-Type': 'application/json'}
+    const result = await request(`/auth`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(datalogin)
     });
-    const result = await request(`/clients/${phone_number}`);
     client = result;
     clientName.textContent = client.name;
+    console.log(client);
   } catch (error) {
     console.log('Ошибка:', error);
   }
 });
 
+registerForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const data = new FormData(registerForm);
+  const username = data.get('username').trim();
+  const useremail = data.get('email').trim();
+  const userpassword = data.get('password').trim();
+
+  const datareg = {
+    name: username,
+    email: useremail,
+    password: userpassword,
+    registration: true
+  };
+
+  try {
+    await request(`/auth`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(datareg)
+    })
+    const result = await request('auth');
+    client = result;
+    clientName.textContent = client.name;
+    console.log(client);
+  } catch (error) {
+    console.log(error);
+  }
+});
 
 
 const openContactModal = () => {
