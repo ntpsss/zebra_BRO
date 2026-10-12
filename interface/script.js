@@ -1542,12 +1542,6 @@ if (registerForm) {
   });
 }
 
-const accountStatusNotice = document.createElement('span');
-accountStatusNotice.className = 'products-status';
-accountStatusNotice.setAttribute('role', 'status');
-accountStatusNotice.setAttribute('aria-live', 'polite');
-loginButton?.after(accountStatusNotice);
-
 const updateLoginState = (state) => {
   if (!loginButtonText) {
     return;
@@ -1555,22 +1549,25 @@ const updateLoginState = (state) => {
   if (state.authStatus === 'checking' || state.authStatus === 'unknown') {
     loginButtonText.textContent = 'Проверяем вход…';
     loginButton.setAttribute('aria-disabled', 'true');
-    accountStatusNotice.textContent = '';
+    loginButton.removeAttribute('title');
   } else if (state.authStatus === 'authenticated') {
     loginButtonText.textContent = `${state.user.email} · Выйти`;
     loginButton.removeAttribute('aria-disabled');
     loginButton.setAttribute('aria-label', `Выйти из аккаунта ${state.user.email}`);
-    accountStatusNotice.textContent = '';
+    loginButton.removeAttribute('title');
   } else if (state.authStatus === 'error') {
     loginButtonText.textContent = 'Повторить проверку';
     loginButton.removeAttribute('aria-disabled');
-    loginButton.setAttribute('aria-label', 'Повторить проверку авторизации');
-    accountStatusNotice.textContent = `Не удалось проверить вход: ${state.authError}`;
+    loginButton.setAttribute(
+      'aria-label',
+      `Повторить проверку авторизации. ${state.authError}`
+    );
+    loginButton.title = state.authError;
   } else {
     loginButtonText.textContent = 'Войти';
     loginButton.removeAttribute('aria-disabled');
     loginButton.setAttribute('aria-label', 'Войти');
-    accountStatusNotice.textContent = state.authError;
+    loginButton.removeAttribute('title');
     if (state.authError && loginMessage) {
       loginMessage.textContent = state.authError;
     }
