@@ -86,8 +86,8 @@
         ? result.message
         : typeof result?.error === 'string'
           ? result.error
-          : response.status === 401 && path === '/login'
-            ? 'Неверный email или пароль.'
+          : response.status === 401 && path === '/auth'
+            ? 'Неверный логин или пароль.'
             : `Сервер вернул ошибку ${response.status}.`;
 
       if (response.status === 401 && authRequired) {
@@ -102,8 +102,8 @@
       }
 
       throw new ApiError(
-        response.status === 401 && path === '/login'
-          ? (detail || 'Проверьте email и пароль.')
+        response.status === 401 && path === '/auth'
+          ? (detail || 'Проверьте логин и пароль.')
           : detail,
         'http',
         response.status
@@ -213,7 +213,7 @@
       cartError: ''
     });
 
-    authCheckPromise = request('/me')
+    authCheckPromise = request('/auth/me')
       .then((result) => {
         if (requestRevision !== authRevision) {
           return state.user;
@@ -356,7 +356,7 @@
       return;
     }
     const requestRevision = authRevision;
-    await request('/logout', {
+    await request('/auth/logout', {
       method: 'POST',
       authRequired: true,
       expectedRevision: requestRevision
@@ -366,7 +366,7 @@
     }
   };
 
-  const login = async (email, password) => {
+  const login = async (name, password) => {
     authRevision += 1;
     authCheckPromise = null;
     cartRefreshPromise = null;
@@ -382,16 +382,16 @@
     });
 
     try {
-      await request('/login', {
+      await request('/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ name, password, registration: false })
       });
       if (requestRevision !== authRevision) {
         return null;
       }
 
-      const result = await request('/me');
+      const result = await request('/auth/me');
       if (!isValidUser(result?.user)) {
         throw new ApiError('Сервер вернул некорректные данные аккаунта.', 'response');
       }

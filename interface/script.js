@@ -1457,9 +1457,9 @@ if (loginForm) {
     }
 
     try {
-      const email = $('#login-username').value.trim().toLocaleLowerCase('ru-RU');
+      const name = $('#login-username').value.trim().toLocaleLowerCase('ru-RU');
       const password = $('#login-password').value;
-      await window.ZebraApi.login(email, password);
+      await window.ZebraApi.login(name, password);
       closeAuthModal();
       loginForm.reset();
     } catch (error) {
@@ -1512,21 +1512,22 @@ if (registerForm) {
       const username = $('#register-username').value.trim().toLocaleLowerCase('ru-RU');
       const email = $('#register-email').value.trim().toLocaleLowerCase('ru-RU');
       const password = registerPasswordInput.value;
-      await request('/auth/register', {
+      await request('/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, email, password })
+        body: JSON.stringify({
+          name: username,
+          email,
+          password,
+          registration: true
+        })
       });
       registerForm.reset();
-      const registeredUser = await window.ZebraApi.checkAuth(true);
-      if (registeredUser) {
-        closeAuthModal();
-      } else {
-        showLoginView();
-        if (loginMessage) {
-          loginMessage.textContent =
-            'Аккаунт создан. Войдите с помощью email и пароля.';
-        }
+      $('#login-username').value = username;
+      showLoginView();
+      if (loginMessage) {
+        loginMessage.textContent =
+          'Аккаунт создан. Войдите с помощью логина и пароля.';
       }
     } catch (error) {
       if (registerMessage) {
