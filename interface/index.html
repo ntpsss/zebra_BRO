@@ -127,13 +127,14 @@
   class="account-link"
   href="#"
   id="login-button"
+  aria-disabled="true"
 >
   <svg>
     <use href="#user"></use>
   </svg>
 
   <span id="login-button-text">
-    Войти
+    Проверяем вход…
   </span>
 </a>
 
@@ -375,11 +376,11 @@
         <input
           class="auth-input"
           id="login-username"
-          name="username"
-          type="text"
-          placeholder="Логин"
-          autocomplete="username"
-          maxlength="32"
+          name="email"
+          type="email"
+          placeholder="E-mail"
+          autocomplete="email"
+          maxlength="254"
           required
         >
         <div class="auth-password-field">
@@ -603,6 +604,7 @@
     </form>
   </section>
 </div>
+    <script src="./api.js"></script>
     <script type="module" src="./script.js"></script>
   </body>
 </html>

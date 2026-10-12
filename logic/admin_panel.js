@@ -1,4 +1,3 @@
-const API_URL = 'https://server-zebrabro.onrender.com/api';
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set([
   'image/jpeg',
@@ -49,34 +48,7 @@ function showMessage(element, text, state = '') {
   }
 }
 
-async function readResponse(response) {
-  const text = await response.text();
-  if (!text) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(text);
-  } catch {
-    return { message: text.slice(0, 240) };
-  }
-}
-
-async function request(path, options = {}) {
-  const response = await fetch(`${API_URL}${path}`, options);
-  const result = await readResponse(response);
-
-  if (!response.ok) {
-    const detail = typeof result?.message === 'string'
-      ? result.message
-      : typeof result?.error === 'string'
-        ? result.error
-        : `Сервер вернул ошибку ${response.status}.`;
-    throw new Error(detail);
-  }
-
-  return result;
-}
+const { request } = window.ZebraApi;
 
 function renderCategories() {
   const categorySelects = [

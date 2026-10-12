@@ -1,4 +1,3 @@
-const API_URL = 'https://server-zebrabro.onrender.com/api';
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set([
   'image/jpeg',
@@ -23,34 +22,7 @@ function escapeHTML(value) {
 }
 
 
-async function readResponse(response) {
-  const text = await response.text();
-  if (!text) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(text);
-  } catch {
-    return { message: text.slice(0, 240) };
-  }
-}
-
-async function request(path, options = {}) {
-  const response = await fetch(`${API_URL}${path}`, options);
-  const result = await readResponse(response);
-
-  if (!response.ok) {
-    const detail = typeof result?.message === 'string'
-      ? result.message
-      : typeof result?.error === 'string'
-        ? result.error
-        : `Сервер вернул ошибку ${response.status}.`;
-    throw new Error(detail);
-  }
-
-  return result;
-}
+const { request } = window.ZebraApi;
 async function loadProducts() {
   const result = await request('/products');
   if(!Array.isArray(result)){
@@ -272,7 +244,7 @@ const renderProductDetail = () => {
     '';
   const description = String(product.description ?? '').trim();
   const stock = product.stock ?? product.quantity;
-  const quantity = cartItems.get(productIndex) || 0;
+  const quantity = cartItems.get(String(product.id)) || 0;
 
   document.title = `${product.name} — Золотая зебра`;
   productDetail.innerHTML = `
@@ -637,18 +609,7 @@ const carousel = $('#carousel');
    ИЗБРАННОЕ И КОРЗИНА
    ========================================================= */
 
-const savedCart = JSON.parse(
-  localStorage.getItem('zebraCart') || '{}'
-);
-
-const cartItems = new Map(
-  Object.entries(savedCart).map(
-    ([productIndex, quantity]) => [
-      Number(productIndex),
-      Number(quantity)
-    ]
-  )
-);
+const cartItems = new Map();
 
 const cart = {
   count: 0,
@@ -656,49 +617,53 @@ const cart = {
 };
 
 const recalculateCart = () => {
-  cart.count = 0;
-  cart.total = 0;
-
-  cartItems.forEach((quantity, productIndex) => {
-    const product = products[productIndex];
-    if (!product || quantity <= 0) {
-      return;
-    }
-
-    cart.count += quantity;
-    cart.total += Number(product.price) * quantity;
-  });
-};
-
-const saveCart = () => {
-  const cartObject = {};
-
-  cartItems.forEach((quantity, productIndex) => {
-    cartObject[productIndex] = quantity;
-  });
-
-  localStorage.setItem(
-    'zebraCart',
-    JSON.stringify(cartObject)
-  );
+  const { cart: serverCart } = window.ZebraApi.getState();
+  cart.count = serverCart.totalQuantity;
+  cart.total = serverCart.totalPrice;
+  if (!Number.isFinite(cart.total) && products.length) {
+    const cartProducts = serverCart.items.map((item) => products.find(
+      (candidate) => String(candidate.id) === String(item.productId)
+    ));
+    cart.total = cartProducts.every(Boolean)
+      ? serverCart.items.reduce((total, item, index) => {
+          return total + Number(cartProducts[index].price) * item.quantity;
+        }, 0)
+      : null;
+  }
 };
 
 const updateCartHeader = () => {
   const cartBadge = $('#cartBadge');
   const cartSum = $('#cartSum');
+  const authState = window.ZebraApi.getState();
+  const isCartReady = authState.authStatus === 'authenticated' &&
+    authState.cartStatus === 'ready';
 
   if (cartBadge) {
-    cartBadge.textContent = cart.count;
+    cartBadge.textContent = authState.authStatus === 'unauthenticated'
+      ? '0'
+      : isCartReady
+        ? cart.count
+        : '—';
   }
 
   if (cartSum) {
-    cartSum.textContent = formatPrice(cart.total);
+    cartSum.textContent = isCartReady && Number.isFinite(cart.total)
+      ? formatPrice(cart.total)
+      : authState.authStatus === 'unauthenticated'
+        ? formatPrice(0)
+        : '—';
   }
 };
 
 const updateProductQuantity = (productIndex) => {
-  const quantity =
-    cartItems.get(productIndex) || 0;
+  const product = products[productIndex];
+  const productId = product?.id;
+  const quantity = productId === undefined
+    ? 0
+    : cartItems.get(String(productId)) || 0;
+  const isMutating = productId !== undefined &&
+    window.ZebraApi.isMutating(productId);
 
   const quantityControls = $$(
     `[data-quantity-control="${productIndex}"]`
@@ -718,6 +683,14 @@ const updateProductQuantity = (productIndex) => {
 
   quantityValues.forEach((quantityValue) => {
     quantityValue.textContent = quantity;
+  });
+  [...quantityControls, ...buyButtons].forEach((control) => {
+    control.querySelectorAll('button').forEach((button) => {
+      button.disabled = isMutating;
+    });
+  });
+  buyButtons.forEach((button) => {
+    button.disabled = isMutating;
   });
 
   if (quantity > 0) {
@@ -743,26 +716,69 @@ const updateAllProductQuantities = () => {
   });
 };
 
-const addProductToCart = (productIndex) => {
+const requireLoginForCart = () => {
+  if (authOverlay) {
+    openAuthModal();
+    if (loginMessage) {
+      loginMessage.textContent = 'Войдите в аккаунт, чтобы добавить товары в корзину.';
+    }
+  } else {
+    window.location.href = './index.html?auth=login';
+  }
+};
+
+const addProductToCart = async (productIndex) => {
   const product = products[productIndex];
   if (!product) {
     return;
   }
 
-  const currentQuantity =
-    cartItems.get(productIndex) || 0;
+  if (window.ZebraApi.getState().authStatus !== 'authenticated') {
+    requireLoginForCart();
+    return;
+  }
 
-  cartItems.set(
-    productIndex,
-    currentQuantity + 1
-  );
+  try {
+    await window.ZebraApi.addCartItem(product.id, 1);
+    bounceCartIcon();
+  } catch (error) {
+    if (error.type !== 'unauthorized') {
+      showCartActionError(error.message);
+    }
+  }
+};
 
-  cart.count += 1;
-  cart.total += Number(product.price);
+const showCartActionError = (message) => {
+  if (loginMessage && authOverlay && !authOverlay.classList.contains('hidden')) {
+    loginMessage.textContent = message;
+    return;
+  }
+  const productDetail = $('#product-detail');
+  if (productDetail) {
+    let notice = $('#cart-action-message');
+    if (!notice) {
+      notice = document.createElement('p');
+      notice.id = 'cart-action-message';
+      notice.className = 'products-status';
+      notice.setAttribute('role', 'alert');
+      productDetail.append(notice);
+    }
+    notice.textContent = message;
+    return;
+  }
 
-  saveCart();
-  updateProductQuantity(productIndex);
-  updateCartHeader();
+  const main = document.querySelector('main');
+  if (main) {
+    let notice = $('#cart-action-message');
+    if (!notice) {
+      notice = document.createElement('p');
+      notice.id = 'cart-action-message';
+      notice.className = 'products-status';
+      notice.setAttribute('role', 'alert');
+      main.prepend(notice);
+    }
+    notice.textContent = message;
+  }
 };
 
 const bounceCartIcon = () => {
@@ -793,42 +809,42 @@ const bounceCartIcon = () => {
   );
 };
 
-const removeProductFromCart = (productIndex) => {
+const removeProductFromCart = async (productIndex) => {
   const product = products[productIndex];
   if (!product) {
     return;
   }
 
-  const currentQuantity =
-    cartItems.get(productIndex) || 0;
-
-  if (currentQuantity <= 0) {
+  const currentQuantity = cartItems.get(String(product.id)) || 0;
+  if (currentQuantity <= 0 || window.ZebraApi.getState().authStatus !== 'authenticated') {
     return;
   }
+  try {
+    await window.ZebraApi.setCartItemQuantity(product.id, currentQuantity - 1);
+  } catch (error) {
+    if (error.type !== 'unauthorized') {
+      showCartActionError(error.message);
+    }
+  }
+};
 
-  const newQuantity = currentQuantity - 1;
-
-  if (newQuantity <= 0) {
-    cartItems.delete(productIndex);
+const updateCartFromState = (state) => {
+  cartItems.clear();
+  if (state.authStatus === 'authenticated') {
+    state.cart.items.forEach((item) => {
+      cartItems.set(String(item.productId), item.quantity);
+    });
+    recalculateCart();
   } else {
-    cartItems.set(productIndex, newQuantity);
-  }
-
-  cart.count -= 1;
-  cart.total -= Number(product.price);
-
-  if (cart.count < 0) {
     cart.count = 0;
-  }
-
-  if (cart.total < 0) {
     cart.total = 0;
   }
-
-  saveCart();
-  updateProductQuantity(productIndex);
+  updateAllProductQuantities();
   updateCartHeader();
+  renderProductDetail();
 };
+
+window.ZebraApi.subscribe(updateCartFromState);
 
 updateAllProductQuantities();
 updateCartHeader();
@@ -959,8 +975,7 @@ productContainers.forEach((productContainer) => {
         buyButton.dataset.buy
       );
 
-      bounceCartIcon();
-      addProductToCart(productIndex);
+      void addProductToCart(productIndex);
       return;
     }
 
@@ -969,8 +984,7 @@ productContainers.forEach((productContainer) => {
         plusButton.dataset.quantityPlus
       );
 
-      bounceCartIcon();
-      addProductToCart(productIndex);
+      void addProductToCart(productIndex);
       return;
     }
 
@@ -979,7 +993,7 @@ productContainers.forEach((productContainer) => {
         minusButton.dataset.quantityMinus
       );
 
-      removeProductFromCart(productIndex);
+      void removeProductFromCart(productIndex);
     }
   });
 });
@@ -1380,7 +1394,19 @@ const showRegisterView = () => {
 if (loginButton) {
   loginButton.addEventListener('click', (event) => {
     event.preventDefault();
-    openAuthModal();
+    const authState = window.ZebraApi.getState();
+    if (authState.authStatus === 'checking' || authState.authStatus === 'unknown') {
+      return;
+    }
+    if (authState.authStatus === 'authenticated') {
+      window.ZebraApi.logout().catch((error) => {
+        window.alert(error.message);
+      });
+    } else if (authState.authStatus === 'error') {
+      void window.ZebraApi.checkAuth();
+    } else {
+      openAuthModal();
+    }
   });
 }
 
@@ -1431,25 +1457,9 @@ if (loginForm) {
     }
 
     try {
-      const username = normalizeUsername($('#login-username').value);
+      const email = $('#login-username').value.trim().toLocaleLowerCase('ru-RU');
       const password = $('#login-password').value;
-      const result = await request('/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-      const authenticatedUsername =
-        typeof result?.user?.username === 'string'
-          ? result.user.username
-          : typeof result?.username === 'string'
-            ? result.username
-            : username;
-
-      localStorage.setItem(
-        'zebraUser',
-        JSON.stringify({ username: authenticatedUsername, isLoggedIn: true })
-      );
-      updateLoginState();
+      await window.ZebraApi.login(email, password);
       closeAuthModal();
       loginForm.reset();
     } catch (error) {
@@ -1499,29 +1509,25 @@ if (registerForm) {
     }
 
     try {
-      const username = normalizeUsername($('#register-username').value);
+      const username = $('#register-username').value.trim().toLocaleLowerCase('ru-RU');
       const email = $('#register-email').value.trim().toLocaleLowerCase('ru-RU');
       const password = registerPasswordInput.value;
-      const result = await request('/auth/register', {
+      await request('/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, email, password })
       });
-      const registeredUsername =
-        typeof result?.user?.username === 'string'
-          ? result.user.username
-          : typeof result?.username === 'string'
-            ? result.username
-            : username;
-
-      localStorage.setItem(
-        'zebraUser',
-        JSON.stringify({ username: registeredUsername, isLoggedIn: true })
-      );
-
-      updateLoginState();
-      closeAuthModal();
       registerForm.reset();
+      const registeredUser = await window.ZebraApi.checkAuth(true);
+      if (registeredUser) {
+        closeAuthModal();
+      } else {
+        showLoginView();
+        if (loginMessage) {
+          loginMessage.textContent =
+            'Аккаунт создан. Войдите с помощью email и пароля.';
+        }
+      }
     } catch (error) {
       if (registerMessage) {
         registerMessage.textContent = error.message ||
@@ -1535,33 +1541,44 @@ if (registerForm) {
   });
 }
 
-const normalizeUsername = (username) =>
-  username.trim().toLocaleLowerCase('ru-RU');
+const accountStatusNotice = document.createElement('span');
+accountStatusNotice.className = 'products-status';
+accountStatusNotice.setAttribute('role', 'status');
+accountStatusNotice.setAttribute('aria-live', 'polite');
+loginButton?.after(accountStatusNotice);
 
-const updateLoginState = () => {
+const updateLoginState = (state) => {
   if (!loginButtonText) {
     return;
   }
-
-  const savedUser = localStorage.getItem('zebraUser');
-
-  if (!savedUser) {
+  if (state.authStatus === 'checking' || state.authStatus === 'unknown') {
+    loginButtonText.textContent = 'Проверяем вход…';
+    loginButton.setAttribute('aria-disabled', 'true');
+    accountStatusNotice.textContent = '';
+  } else if (state.authStatus === 'authenticated') {
+    loginButtonText.textContent = `${state.user.email} · Выйти`;
+    loginButton.removeAttribute('aria-disabled');
+    loginButton.setAttribute('aria-label', `Выйти из аккаунта ${state.user.email}`);
+    accountStatusNotice.textContent = '';
+  } else if (state.authStatus === 'error') {
+    loginButtonText.textContent = 'Повторить проверку';
+    loginButton.removeAttribute('aria-disabled');
+    loginButton.setAttribute('aria-label', 'Повторить проверку авторизации');
+    accountStatusNotice.textContent = `Не удалось проверить вход: ${state.authError}`;
+  } else {
     loginButtonText.textContent = 'Войти';
-    return;
-  }
-
-  try {
-    const user = JSON.parse(savedUser);
-    if (user.isLoggedIn && typeof user.username === 'string') {
-      loginButtonText.textContent = user.username;
-    } else {
-      localStorage.removeItem('zebraUser');
-      loginButtonText.textContent = 'Войти';
+    loginButton.removeAttribute('aria-disabled');
+    loginButton.setAttribute('aria-label', 'Войти');
+    accountStatusNotice.textContent = state.authError;
+    if (state.authError && loginMessage) {
+      loginMessage.textContent = state.authError;
     }
-  } catch (error) {
-    localStorage.removeItem('zebraUser');
-    loginButtonText.textContent = 'Войти';
   }
 };
 
-updateLoginState();
+window.ZebraApi.subscribe(updateLoginState);
+void window.ZebraApi.checkAuth();
+
+if (new URLSearchParams(window.location.search).get('auth') === 'login') {
+  openAuthModal();
+}
