@@ -129,24 +129,6 @@ svg {
   white-space: nowrap;
 }
 
-
-
-.brand-name {
-  display: block;
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 1.15;
-}
-
-.brand-caption {
-  display: block;
-  margin-top: 3px;
-  color: var(--gold-dark);
-  font-size: 11px;
-  letter-spacing: 0.25em;
-  text-transform: uppercase;
-}
-
 .catalog {
   position: relative;
   display: none;
@@ -289,22 +271,10 @@ svg {
   font-weight: 700;
 }
 
-.clear-button {
-  display: inline-flex;
-  padding: 5px;
-  color: #999187;
-  background: transparent;
-  border: 0;
-}
-
 .search-button {
   height: 34px;
   padding: 0 16px;
   font-size: 14px;
-}
-
-.header-spacer {
-  display: none;
 }
 
 .account-nav {
@@ -346,13 +316,8 @@ svg {
   font-weight: 700;
 }
 
-.mobile-search,
 .mobile-nav {
   display: block;
-}
-
-.mobile-search {
-  padding-bottom: 12px;
 }
 
 .mobile-nav {
@@ -1185,12 +1150,6 @@ h2 {
   font-weight: 700;
 }
 
-.category-arrow {
-  color: var(--gold-dark);
-  font-size: 20px;
-  line-height: 1;
-}
-
 .catalog-fullscreen-content {
   min-width: 0;
   min-height: 0;
@@ -1270,63 +1229,6 @@ h2 {
   flex: initial;
 }
 
-.catalog-card {
-  position: relative;
-  min-height: 180px;
-  overflow: hidden;
-  background: #f2f2f2;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  transition:
-    transform 0.2s,
-    box-shadow 0.2s;
-}
-
-.catalog-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-}
-
-.catalog-card-image {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  background: #eee;
-}
-
-.catalog-card img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s;
-}
-
-.catalog-card:hover img {
-  transform: scale(1.05);
-}
-
-.catalog-card span {
-  position: absolute;
-  bottom: 12px;
-  left: 12px;
-  display: block;
-  width: max-content;
-  max-width: calc(100% - 24px);
-  min-height: 0;
-  padding: 9px 14px;
-  color: var(--ink);
-  background: rgba(255, 255, 255, 0.96);
-  border-radius: 999px;
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 1.3;
-}
-
-.catalog-card-featured {
-  grid-row: span 2;
-}
-
 .catalog-empty {
   padding: 40px 20px;
   color: var(--muted);
@@ -1377,24 +1279,6 @@ h2 {
   font-size: 14px;
 }
 
-.socials {
-  display: flex;
-  gap: 8px;
-  margin-top: 16px;
-}
-
-.social {
-  padding: 6px 10px;
-  color: var(--white);
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  font-size: 13px;
-}
-
-.social:hover {
-  background: var(--gold);
-}
-
 .subscribe {
   display: flex;
   gap: 8px;
@@ -1432,11 +1316,6 @@ h2 {
    ========================================================= */
 
 @media (min-width: 768px) {
-  .category-grid {
-    grid-template-columns: repeat(6, 1fr);
-    gap: 20px;
-  }
-
   .category-name {
     font-size: 14px;
   }
@@ -1495,7 +1374,6 @@ h2 {
     display: flex;
   }
 
-  .mobile-search,
   .mobile-nav {
     display: none;
   }
@@ -1535,9 +1413,6 @@ h2 {
     grid-template-columns: repeat(2, minmax(160px, 1fr));
   }
 
-  .catalog-card-featured {
-    grid-row: auto;
-  }
 }
 
 @media (max-width: 900px) {
@@ -1615,11 +1490,6 @@ h2 {
     gap: 12px;
   }
 
-  .catalog-card span {
-    min-height: 44px;
-    padding: 10px;
-    font-size: 12px;
-  }
 }
 
 /* =========================================================
@@ -1627,10 +1497,6 @@ h2 {
    ========================================================= */
 
 @media (max-width: 420px) {
-  .brand-caption {
-    font-size: 9px;
-  }
-
   .account-link {
     min-width: 45px;
     padding-right: 4px;
@@ -1661,14 +1527,6 @@ h2 {
   .catalog-all-link {
     margin-top: 10px;
   }
-}
-
-.header-spacer {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
 }
 
 /* Строка шапки */
@@ -1811,30 +1669,6 @@ h2 {
   }
 }
 
-/* Логотип в подвале */
-.footer-brand {
-  display: block;
-  margin: 0;
-  padding: 0;
-}
-
-.footer-brand-logo-full {
-  width: 260px;
-  height: 82px;
-  display: block;
-  margin: 0;
-  object-fit: contain;
-  object-position: left center;
-  border: 0;
-  border-radius: 0 !important;
-}
-
-@media (max-width: 767px) {
-  .footer-brand-logo-full {
-    width: 230px;
-    height: 72px;
-  }
-}
 /* =========================================================
    МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ
    ========================================================= */
