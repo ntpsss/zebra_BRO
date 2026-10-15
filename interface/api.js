@@ -61,7 +61,8 @@
     try {
       response = await fetch(`${API_BASE_URL}${path}`, {
         ...fetchOptions,
-        credentials: 'include'
+        credentials: 'include',
+        ...(path === '/auth/me' ? { cache: 'no-store' } : {})
       });
     } catch {
       throw new ApiError(
@@ -193,6 +194,15 @@
     (typeof user.id === 'string' || typeof user.id === 'number') &&
     typeof user.email === 'string';
 
+  const isValidAdmin = (user) =>
+    user &&
+    (typeof user.id === 'string' || typeof user.id === 'number') &&
+    user.role === 'admin';
+
+  const normalizeUser = (result) => result?.user
+    ? { ...result.user, role: result.role ?? result.user.role }
+    : null;
+
   const checkAuth = (force = false) => {
     if (authCheckPromise && !force) {
       return authCheckPromise;
@@ -218,16 +228,17 @@
         if (requestRevision !== authRevision) {
           return state.user;
         }
-        if (!isValidUser(result?.user)) {
+        const user = normalizeUser(result);
+        if (!isValidUser(user) && !isValidAdmin(user)) {
           throw new ApiError('Сервер вернул некорректные данные аккаунта.', 'response');
         }
         setState({
           authStatus: 'authenticated',
-          user: result.user,
+          user,
           authError: ''
         });
         void refreshCart().catch(() => {});
-        return result.user;
+        return user;
       })
       .catch((error) => {
         if (requestRevision !== authRevision) {
@@ -366,7 +377,12 @@
     }
   };
 
-  const login = async (name, password) => {
+  const authenticate = async (
+    path,
+    credentials,
+    validateUser = isValidUser,
+    invalidUserMessage = 'Сервер вернул некорректные данные аккаунта.'
+  ) => {
     authRevision += 1;
     authCheckPromise = null;
     cartRefreshPromise = null;
@@ -382,18 +398,19 @@
     });
 
     try {
-      await request('/auth', {
+      await request(path, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, password, registration: false })
+        body: JSON.stringify(credentials)
       });
       if (requestRevision !== authRevision) {
         return null;
       }
 
       const result = await request('/auth/me');
-      if (!isValidUser(result?.user)) {
-        throw new ApiError('Сервер вернул некорректные данные аккаунта.', 'response');
+      const user = normalizeUser(result);
+      if (!validateUser(user)) {
+        throw new ApiError(invalidUserMessage, 'response');
       }
       if (requestRevision !== authRevision) {
         return null;
@@ -401,7 +418,7 @@
 
       setState({
         authStatus: 'authenticated',
-        user: result.user,
+        user,
         authError: '',
         cart: clearCart(),
         cartStatus: 'loading',
@@ -412,7 +429,7 @@
       } catch {
         // The signed-in state remains valid; the cart view exposes its own retryable error.
       }
-      return result.user;
+      return user;
     } catch (error) {
       if (requestRevision === authRevision) {
         setState({
@@ -428,12 +445,25 @@
     }
   };
 
+  const login = (name, password) => authenticate('/auth', {
+    name,
+    password,
+    registration: false
+  });
+
+  const adminLogin = (name, password) => authenticate('/auth/admin/login', {
+    name,
+    password
+  }, isValidAdmin, 'Сервер вернул некорректные данные администратора.');
+
+
+
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible' && state.authStatus === 'authenticated') {
       void refreshCart().catch(() => {});
     }
   });
-
+  
   window.ZebraApi = {
     ApiError,
     request,
@@ -442,6 +472,7 @@
     addCartItem,
     setCartItemQuantity,
     login,
+    adminLogin,
     logout,
     subscribe(listener) {
       listeners.add(listener);

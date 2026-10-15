@@ -1,3 +1,4 @@
+
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set([
   'image/jpeg',
@@ -15,7 +16,8 @@ const panels = {
   editProduct: document.querySelector('#edit-product-panel'),
   editCategory: document.querySelector('#edit-category-panel'),
   productTarget: document.querySelector('#product-target-panel'),
-  categoryTarget: document.querySelector('#category-target-panel')
+  categoryTarget: document.querySelector('#category-target-panel'),
+  admins: document.querySelector('#admin-users-panel')
 };
 
 let categories = [];
@@ -349,6 +351,8 @@ actionSelect?.addEventListener('change', () => {
   } else if (action === 'edit-category') {
     panels.categoryTarget.hidden = false;
     categoryTargetSelect.value = '';
+  } else if (action === 'manage-admins') {
+    panels.admins.hidden = false;
   }
 });
 
@@ -660,6 +664,12 @@ async function initializeAdmin() {
   const count = document.querySelector('#products-count');
 
   try {
+    const user = await window.ZebraApi.checkAuth(true);
+    if (user?.role !== 'admin') {
+      window.location.replace('./admin-login.html');
+      return;
+    }
+
     const results = await Promise.allSettled([loadCategories(), loadProducts()]);
     const failures = results.filter((result) => result.status === 'rejected');
     if (failures.length) {

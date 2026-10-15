@@ -468,6 +468,35 @@
       text-align: center;
     }
 
+    .admin-users-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .admin-users-table th,
+    .admin-users-table td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .admin-users-table th {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .admin-users-empty {
+      color: var(--muted);
+      text-align: center !important;
+    }
+
+    @media (max-width: 600px) {
+      .admin-users-table th,
+      .admin-users-table td {
+        padding: 10px 6px;
+      }
+    }
+
     .delete-confirmation {
       width: min(calc(100% - 32px), 440px);
       padding: 28px;
@@ -655,6 +684,7 @@
           <option value="add-category">Добавить категорию</option>
           <option value="edit-product">Изменить товар</option>
           <option value="edit-category">Изменить категорию</option>
+          <option value="manage-admins">Управление администраторами</option>
         </select>
       </div>
     </section>
@@ -1063,6 +1093,75 @@
     </form>
 </section>
     </div>
+  </div>
+
+  <div class="container">
+    <section class="admin-form" id="admin-users-panel" aria-labelledby="admin-users-title" hidden>
+      <div class="admin-form-heading">
+        <div>
+          <h2 id="admin-users-title">Администраторы</h2>
+          <p class="form-description">Добавление и удаление учетных записей администраторов.</p>
+        </div>
+      </div>
+
+      <form id="admin-create-form">
+        <div class="form-grid">
+          <div class="form-field">
+            <label for="new-admin-name">Логин администратора</label>
+            <input
+              id="new-admin-name"
+              name="name"
+              type="text"
+              autocomplete="username"
+              required
+            >
+          </div>
+
+          <div class="form-field">
+            <label for="new-admin-password">Пароль</label>
+            <input
+              id="new-admin-password"
+              name="password"
+              type="password"
+              autocomplete="new-password"
+              required
+            >
+          </div>
+        </div>
+
+        <button class="form-submit" type="submit">Добавить администратора</button>
+        <span class="form-message" id="admin-create-message" role="status" aria-live="polite"></span>
+      </form>
+
+      <h3>Список администраторов</h3>
+      <div class="products-grid-wrapper" style="overflow-x: auto;">
+        <table class="admin-users-table">
+          <thead>
+            <tr>
+              <th scope="col">Логин</th>
+              <th scope="col">Действие</th>
+            </tr>
+          </thead>
+          <tbody id="admin-users-list">
+            <tr>
+              <td class="admin-users-empty" colspan="2">Список администраторов пока пуст.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <template id="admin-user-row-template">
+        <tr>
+          <td data-admin-name></td>
+          <td>
+            <button class="admin-product-delete" type="button" data-delete-admin>
+              Удалить
+            </button>
+          </td>
+        </tr>
+      </template>
+      <p class="products-message" id="admin-users-message" role="status" aria-live="polite"></p>
+    </section>
   </div>
 </main>
 
