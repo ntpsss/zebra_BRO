@@ -727,6 +727,17 @@ const requireLoginForCart = () => {
   }
 };
 
+const requireLoginForFavorites = () => {
+  if (authOverlay) {
+    openAuthModal();
+    if (loginMessage) {
+      loginMessage.textContent = 'Войдите в аккаунт, чтобы добавить товары в избранное.';
+    }
+  } else {
+    window.location.href = './index.html?auth=login';
+  }
+};
+
 const addProductToCart = async (productIndex) => {
   const product = products[productIndex];
   if (!product) {
@@ -940,6 +951,14 @@ productContainers.forEach((productContainer) => {
       const productIndex = Number(
         favoriteButton.dataset.fav
       );
+
+      if (
+        !favorites.has(productIndex) &&
+        window.ZebraApi.getState().authStatus !== 'authenticated'
+      ) {
+        requireLoginForFavorites();
+        return;
+      }
 
       if (favorites.has(productIndex)) {
         favorites.delete(productIndex);
