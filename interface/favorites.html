@@ -18,6 +18,19 @@
       <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18" />
       <path d="M16 10a4 4 0 0 1-8 0" />
     </symbol>
+    <symbol id="home" viewBox="0 0 24 24">
+      <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    </symbol>
+    <symbol id="grid" viewBox="0 0 24 24">
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <rect x="14" y="14" width="7" height="7" rx="1" />
+    </symbol>
+    <symbol id="user" viewBox="0 0 24 24">
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21a8 8 0 0 1 16 0" />
+    </symbol>
   </svg>
 
   <header class="site-header favorites-site-header">
@@ -44,6 +57,14 @@
       </div>
     </div>
   </header>
+
+  <nav class="mobile-nav" aria-label="Основная навигация">
+    <a href="./index.html#top"><svg aria-hidden="true"><use href="#home"></use></svg><span>Главная</span></a>
+    <a href="./index.html#hits"><svg aria-hidden="true"><use href="#grid"></use></svg><span>Каталог</span></a>
+    <a href="./favorites.html" aria-current="page"><svg aria-hidden="true"><use href="#heart"></use></svg><span>Избранное</span></a>
+    <a href="./cart.html"><svg aria-hidden="true"><use href="#bag"></use></svg><span>Корзина</span></a>
+    <a href="./index.html?auth=login"><svg aria-hidden="true"><use href="#user"></use></svg><span>Войти</span></a>
+  </nav>
 
   <main class="favorites-page">
     <div class="container">

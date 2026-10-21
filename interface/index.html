@@ -230,11 +230,11 @@
 </section>
 
     <nav class="mobile-nav">
-  <a href="#top">
+      <a href="#top" aria-current="page">
     <svg><use href="#home"></use></svg>
     <span>Главная</span>
   </a>
-  <button type="button" class="mobile-nav-btn" id="mobile-catalog-button" aria-expanded="false" aria-controls="catalog-panel">
+      <button type="button" class="mobile-nav-btn" id="mobile-catalog-button" aria-expanded="false" aria-controls="catalog-panel" aria-label="Открыть каталог">
     <svg><use href="#grid"></use></svg>
     <span>Каталог</span>
   </button>
@@ -242,11 +242,15 @@
     <svg><use href="#heart"></use></svg>
     <span>Избранное</span>
   </a>
-  <a href="#footer">
-    <svg><use href="#user"></use></svg>
-    <span>Профиль</span>
+      <a href="./cart.html">
+        <svg><use href="#bag"></use></svg>
+        <span>Корзина</span>
   </a>
-</nav>
+      <a href="./index.html?auth=login">
+        <svg><use href="#user"></use></svg>
+        <span>Войти</span>
+      </a>
+    </nav>
 
     <main id="top">
       <div class="container">
